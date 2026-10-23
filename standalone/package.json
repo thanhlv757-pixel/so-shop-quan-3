@@ -1,0 +1,31 @@
+{
+  "name": "so-shop-standalone",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "start": "node server.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "password": "node scripts/password.mjs"
+  },
+  "dependencies": {
+    "react": "19.2.6",
+    "react-dom": "19.2.6",
+    "lucide-react": "^1.31.0",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "vite": "8.0.13",
+    "typescript": "5.9.3",
+    "@vitejs/plugin-react": "6.0.2",
+    "@tailwindcss/postcss": "4.2.1",
+    "tailwindcss": "4.2.1",
+    "@types/react": "19.2.14",
+    "@types/react-dom": "19.2.3",
+    "@types/node": "22.19.19"
+  }
+}

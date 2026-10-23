@@ -1,5 +1,10 @@
 # Sổ Shop · Quận 3 — instructions for the next coding assistant
 
+## Current task: standalone web
+
+The user requested an independent web app outside Sites on 2026-10-23. Work in `standalone/` and read `standalone/README.md` first. It has its own Node 24 server, login, SQLite and local evidence storage. The root app is the retained Sites version; leave its deployment and live data unchanged. Hosting authorization and actual data/image migration are still pending. Do not claim an online URL until deployment is verified.
+
+
 Read `BAN_GIAO.md`, `docs/LOCAL_SETUP.md` and `docs/MIGRATION.md` before editing. The user authorizes continuing development of their existing app. They are a shop employee, not a programmer; communicate concisely in Vietnamese.
 
 ## Existing project

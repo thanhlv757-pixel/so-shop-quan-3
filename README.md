@@ -1,3 +1,5 @@
+> **Web độc lập:** mã và hướng dẫn chạy/triển khai nằm trong [standalone/](standalone/README.md). Bản độc lập chưa triển khai production; bản Sites bên dưới vẫn được giữ nguyên.
+
 # Sổ Shop · Quận 3
 
 **Bàn giao cho Claude:** đọc [CLAUDE.md](CLAUDE.md), [BAN_GIAO.md](BAN_GIAO.md) và [hướng dẫn chạy local](docs/LOCAL_SETUP.md). Kho nguồn này thuộc chủ dự án; việc push lên GitHub không tự cập nhật website Sites. Nội dung gửi cho Claude có trong [PROMPT_CHO_CLAUDE.txt](PROMPT_CHO_CLAUDE.txt).
