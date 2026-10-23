@@ -1,0 +1,12 @@
+Tôi bàn giao cho bạn tiếp tục ứng dụng Sổ Shop · Quận 3. Hãy đọc CLAUDE.md, BAN_GIAO.md, docs/LOCAL_SETUP.md và docs/MIGRATION.md trong mã nguồn đính kèm trước khi sửa.
+
+Dự án Sites đang có: appgprj_6adaf817e6b48191b0f192dee3439e6c
+Web: https://so-shop-q3-thanh.thanhlv757.chatgpt.site
+
+Trước tiên kiểm tra bạn có công cụ Sites để truy cập đúng dự án bằng tài khoản của tôi hay không. Nếu có quyền đọc/chỉnh sửa/triển khai, ưu tiên tiếp tục cùng dự án, giữ quyền riêng tư và dữ liệu. Không tạo bản sao web hoặc đòi chuyển hosting chỉ vì đổi trợ lý.
+
+Nếu không truy cập được Sites, hãy làm từ mã nguồn bằng Claude Code hoặc GitHub riêng; nói rõ quyền nào còn thiếu. Không khẳng định đã chuyển quyền hoặc đã triển khai chỉ vì đã nhận file ZIP. Mã nguồn không kèm mật khẩu/token, database thật hay ảnh thật.
+
+Giữ toàn bộ nghiệp vụ: KPI 450 cây toàn shop; dưới KPI 5.000đ/cây, đạt KPI 10.000đ/cây áp dụng toàn tháng; tiền công theo số vợt từng người. Tất cả khoản chi trừ quỹ, chỉ Chi theo đơn hàng tăng số hóa đơn; chi nội bộ gồm dụng cụ/xăng/khác không tính hóa đơn. Cọc sản phẩm giữ xuyên tháng và tách khỏi quỹ. Giữ các mã đơn riêng, danh mục sản phẩm, kênh liên hệ khách, ảnh chọn/dán, xuất Excel kèm ảnh, sao lưu và cách ly tài khoản.
+
+Hãy bắt đầu bằng đọc cấu trúc, chạy kiểm tra, liệt kê trạng thái bạn đã xác minh và các bước tiếp theo. Trả lời ngắn gọn bằng tiếng Việt. Không nhập dữ liệu demo từ ba Excel nguồn ban đầu.

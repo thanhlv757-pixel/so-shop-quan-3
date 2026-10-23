@@ -1,0 +1,26 @@
+{
+  "project_title": "Sổ Shop · Quận 3",
+  "sites_project_id": "appgprj_6adaf817e6b48191b0f192dee3439e6c",
+  "source_commit": "80b17e203eeeaa29736aeb836585d16d80ec5b37",
+  "snapshot_created_at": "2026-10-23T11:28:38.482977+00:00",
+  "live_url": "https://so-shop-q3-thanh.thanhlv757.chatgpt.site",
+  "source_files_from_git": true,
+  "git_history_included": false,
+  "credentials_included": false,
+  "live_database_included": false,
+  "live_images_included": false,
+  "github_repository_created": true,
+  "ownership_transferred": false,
+  "local_only_additions": [
+    "CLAUDE.md",
+    "BAN_GIAO.md",
+    "docs/LOCAL_SETUP.md",
+    "docs/MIGRATION.md",
+    "scripts/handoff-setup.mjs",
+    "HANDOFF_MANIFEST.json"
+  ],
+  "github_repository_url": "https://github.com/thanhlv757-pixel/so-shop-quan-3",
+  "github_visibility": "private",
+  "github_owner": "thanhlv757-pixel",
+  "handoff_scope": "Source code and documentation committed to user-owned private GitHub repository; Sites ownership, runtime data and hosting unchanged."
+}
