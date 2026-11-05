@@ -1,0 +1,445 @@
+import { SOURCES, TRAFFIC, usedOf, usable, forecastPlan, verdict, calibration, buildModel } from "./model.js";
+import { searchPlace, route, googleMapsLink } from "./maps.js";
+import { load, save, validateImport } from "./store.js";
+
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const fmt = (n, d = 1) => (n == null || !isFinite(n) ? "—" : Number(n).toLocaleString("vi-VN", { minimumFractionDigits: d, maximumFractionDigits: d }));
+const r0 = (v) => Math.round(v);
+const today = () => { const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 10); };
+const dmy = (s) => (s ? s.split("-").reverse().join("/") : "—");
+
+/* ---------- trạng thái ---------- */
+const blankStop = () => ({ name: "", addr: "", lat: null, lon: null, label: "", time: "" });
+const blankLeg = () => ({ km: "", kmSource: "osm", mapsMin: "", traffic: "normal", bridge: false, route: "" });
+const emptyPlan = () => ({ date: "", startPin: "", stops: [blankStop(), blankStop()], legs: [blankLeg()] });
+
+let state = { legs: [], plan: emptyPlan(), settings: { reserve: 20, includeEstimates: false } };
+const ui = { results: {}, searching: {}, routes: {}, routing: {}, logDraft: null, editId: null, confirmDel: null, confirmClear: false };
+
+// Lưu ngay mỗi lần thay đổi, lần lượt từng lần (người dùng có thể tắt app bất cứ lúc nào).
+let saving = Promise.resolve();
+function persist() { saving = saving.then(() => save(state)).catch(() => {}); return saving; }
+function toast(t) { const el = $("#toast"); el.textContent = t; el.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => (el.hidden = true), 2600); }
+
+/* ---------- bản đồ ---------- */
+let map = null, mapLayer = null;
+function initMap() {
+  if (!window.L) { $("#map").innerHTML = '<p class="small muted" style="padding:12px">Không tải được bản đồ.</p>'; return; }
+  map = L.map("map", { zoomControl: false, attributionControl: true }).setView([10.78, 106.69], 12);
+  L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: "© OpenStreetMap" }).addTo(map);
+  mapLayer = L.layerGroup().addTo(map);
+}
+function drawMap() {
+  if (!map) return;
+  mapLayer.clearLayers();
+  const pts = [];
+  state.plan.stops.forEach((s, i) => {
+    if (s.lat == null) return;
+    pts.push([s.lat, s.lon]);
+    L.circleMarker([s.lat, s.lon], { radius: 9, color: "#0f6b55", fillColor: "#0f6b55", fillOpacity: 1, weight: 2 })
+      .bindTooltip(i === 0 ? "A" : String(i), { permanent: true, direction: "center", className: "" })
+      .addTo(mapLayer);
+  });
+  state.plan.legs.forEach((pl, i) => {
+    const alts = ui.routes[i];
+    if (!alts) return;
+    const sel = alts[pl.altIndex ?? 0];
+    if (sel?.geometry) L.geoJSON(sel.geometry, { style: { color: "#2b7de9", weight: 5, opacity: 0.85 } }).addTo(mapLayer);
+  });
+  if (pts.length === 1) map.setView(pts[0], 14);
+  else if (pts.length > 1) map.fitBounds(pts, { padding: [28, 28] });
+  setTimeout(() => map.invalidateSize(), 50);
+}
+
+/* ---------- Dự báo ---------- */
+function battBar(v) {
+  const w = Math.max(0, Math.min(100, v));
+  const c = v < 10 ? "var(--bad)" : v < state.settings.reserve ? "var(--warn)" : "var(--ok)";
+  return `<div class="batt" aria-hidden="true"><i style="width:${w}%;background:${c}"></i></div>`;
+}
+
+function stopHTML(s, i) {
+  const res = ui.results[i];
+  return `<div class="stop"><div class="dot">${i === 0 ? "A" : i}</div><div class="stopf">
+    <div class="row">
+      <label>${i === 0 ? "Điểm xuất phát" : "Điểm dừng " + i}<input id="s-name-${i}" data-stop="${i}" data-f="name" value="${esc(s.name)}" placeholder="Tên (vd: Nhà, sân Green)"></label>
+      <label style="flex:0 1 104px">${i === 0 ? "Giờ đi" : "Giờ rời"}<input id="s-time-${i}" data-stop="${i}" data-f="time" type="time" value="${esc(s.time)}"></label>
+    </div>
+    <div class="row">
+      <label style="flex:1 1 200px">Địa chỉ (ghi kèm quận)<input id="s-addr-${i}" data-stop="${i}" data-f="addr" value="${esc(s.addr)}" placeholder="vd: 527 Điện Biên Phủ, Quận 3" enterkeyhint="search"></label>
+      <button class="btn sm" data-act="search" data-i="${i}" type="button"${ui.searching[i] ? " disabled" : ""}>${ui.searching[i] ? "Đang tìm…" : "Tìm"}</button>
+      ${state.plan.stops.length > 2 ? `<button class="btn sm danger" data-act="stop-del" data-i="${i}" type="button" aria-label="Xoá điểm ${i}">Xoá</button>` : ""}
+    </div>
+    ${s.lat != null ? `<p class="resolved"><b>✓ Đã định vị:</b> ${esc(s.label || s.addr)}</p>` : s.addr ? `<p class="resolved">Chưa định vị. Bấm “Tìm” để chọn đúng địa điểm.</p>` : ""}
+    ${res ? (res.length ? `<div class="results">${res.map((r, k) => `<button type="button" data-act="pick" data-i="${i}" data-k="${k}">${esc(r.label)}</button>`).join("")}</div>` : `<p class="hint warn">Không tìm thấy. Thử ghi rõ số nhà, tên đường và quận.</p>`) : ""}
+  </div></div>`;
+}
+
+function legHTML(pl, i, r) {
+  const a = state.plan.stops[i], b = state.plan.stops[i + 1];
+  const gm = googleMapsLink(a, b), alts = ui.routes[i];
+  const canRoute = a.addr || a.lat != null ? (b.addr || b.lat != null) : false;
+  return `<div class="leg">
+    <div class="row" style="justify-content:space-between;align-items:center"><h3>Chặng ${i + 1}</h3>
+      <div class="actions">
+        <button class="btn sm primary" data-act="route" data-i="${i}" type="button"${!canRoute || ui.routing[i] ? " disabled" : ""}>${ui.routing[i] ? "Đang tra…" : "Tra km"}</button>
+        ${gm ? `<a class="btn sm" href="${esc(gm)}" target="_blank" rel="noopener">Google Maps ↗</a>` : ""}
+      </div></div>
+    ${alts ? `<div class="alts" role="group" aria-label="Chọn tuyến">${alts.map((t, k) => `<button type="button" class="alt" data-act="alt" data-i="${i}" data-k="${k}" aria-pressed="${(pl.altIndex ?? 0) === k}">${k === 0 ? "Tuyến chính" : "Tuyến " + (k + 1)}: ${fmt(t.km)} km · ${t.min}′</button>`).join("")}</div>` : ""}
+    <div class="row">
+      <label>Km<input id="l-km-${i}" class="num" data-leg="${i}" data-f="km" type="number" inputmode="decimal" step="0.1" min="0" value="${esc(pl.km)}"></label>
+      <label>Phút (bản đồ)<input id="l-min-${i}" class="num" data-leg="${i}" data-f="mapsMin" type="number" inputmode="numeric" min="0" value="${esc(pl.mapsMin)}"></label>
+      <label>Nguồn km<select id="l-src-${i}" data-leg="${i}" data-f="kmSource">${["osm", "maps", "measured", "estimate"].map((k) => `<option value="${k}"${pl.kmSource === k ? " selected" : ""}>${SOURCES[k]}</option>`).join("")}</select></label>
+    </div>
+    <div class="row">
+      <label>Giao thông<select id="l-tr-${i}" data-leg="${i}" data-f="traffic">${Object.entries(TRAFFIC).map(([k, v]) => `<option value="${k}"${pl.traffic === k ? " selected" : ""}>${v}</option>`).join("")}</select></label>
+      <label class="check" style="flex:0 0 auto"><input id="l-br-${i}" data-leg="${i}" data-f="bridge" type="checkbox"${pl.bridge ? " checked" : ""}>Có cầu / dốc</label>
+    </div>
+    <label>Tuyến dự định<input id="l-route-${i}" data-leg="${i}" data-f="route" value="${esc(pl.route)}" placeholder="vd: Điện Biên Phủ → Nguyễn Bỉnh Khiêm"></label>
+    <div class="hint ${r.f.ok ? "" : "warn"}">${r.f.ok ? `Dự báo tốn <b class="num">${r0(r.f.fav)}–${r0(r.f.adv)}%</b>, thường khoảng <b class="num">${r0(r.f.norm)}%</b>. ` : ""}${r.f.basis.map(esc).join(". ")}.</div>
+    <button class="btn sm" data-act="log-from-plan" data-i="${i}" type="button">Ghi pin thực tế chặng này</button>
+  </div>`;
+}
+
+function renderPlan() {
+  const p = state.plan, F = forecastPlan(state.legs, p, state.settings), V = verdict(F);
+  let h = `<div class="card"><div class="row" style="justify-content:space-between;align-items:center"><h2>Lịch trình</h2>
+      <button class="btn sm" data-act="plan-clear" type="button">${ui.confirmClear ? "Bấm lần nữa để xoá" : "Lịch trình mới"}</button></div>
+    <div class="row">
+      <label>Ngày đi<input id="p-date" type="date" value="${esc(p.date)}"></label>
+      <label>Pin lúc xuất phát (%)<input id="p-start" class="num" type="number" inputmode="numeric" min="0" max="100" value="${esc(p.startPin)}" placeholder="bắt buộc"></label>
+    </div>`;
+  p.stops.forEach((s, i) => { h += stopHTML(s, i); if (i < p.legs.length) h += legHTML(p.legs[i], i, F.rows[i]); });
+  h += `<button class="btn" data-act="stop-add" type="button">+ Thêm điểm dừng</button>
+    <p class="small muted">Km và phút lấy từ bản đồ OpenStreetMap (tính cho xe chạy bình thường, chưa tính kẹt xe). Có thể bấm Google Maps để đối chiếu.</p></div>`;
+
+  const tm = F.rows.length && F.rows.every((r) => r.min) ? [F.rows.reduce((s, r) => s + r.min[0], 0), F.rows.reduce((s, r) => s + r.min[1], 0)] : null;
+  h += `<div class="card"><h2>A. Tổng quan</h2><div class="stats">
+    <div class="stat"><span class="l">Tổng quãng đường</span><span class="v">${F.km > 0 ? fmt(F.km) + " km" : "—"}</span><span class="small muted">${F.kmAll ? "đủ km các chặng" : "còn chặng thiếu km"}</span></div>
+    <div class="stat"><span class="l">Số chặng</span><span class="v">${F.rows.length}</span></div>
+    <div class="stat"><span class="l">Thời gian chạy</span><span class="v">${tm ? `${tm[0]}–${tm[1]}′` : "—"}</span><span class="small muted">${tm ? "có cộng 25% dự phòng" : "cần số phút"}</span></div>
+    <div class="stat"><span class="l">Pin xuất phát</span><span class="v">${F.start != null ? fmt(F.start, 0) + "%" : "?"}</span><span class="small muted">${F.start != null ? "" : "chưa nhập"}</span></div>
+  </div></div>`;
+
+  h += `<div class="card"><h2>B. Từng chặng</h2><div class="tablewrap"><table><thead><tr><th>Chặng</th><th class="r">Km</th><th class="r">Phút</th><th class="r">Tốn</th><th class="r">Còn</th></tr></thead><tbody>`;
+  F.rows.forEach((r) => {
+    h += `<tr><td class="legname">${r.i + 1}. ${esc(r.a.name || r.a.addr || "?")} → ${esc(r.b.name || r.b.addr || "?")}</td>
+      <td class="r num">${Number(r.pl.km) > 0 ? fmt(r.pl.km) : "—"}</td><td class="r num">${r.min ? r.min[0] + "–" + r.min[1] : "—"}</td>
+      <td class="r num">${r.f.ok ? r0(r.f.norm) + "%" : "—"}</td><td class="r num">${r.after ? r0(r.after.norm) + "%" : r.cum ? "−" + r0(r.cum.norm) + "%" : "—"}</td></tr>`;
+  });
+  h += `</tbody></table></div>${F.start == null && F.complete ? `<p class="small muted">Chưa có pin xuất phát nên cột “Còn” ghi tổng % đã tốn.</p>` : ""}</div>`;
+
+  if (F.complete) {
+    const col = (k, t, d) => {
+      const fin = F.end ? F.end[k] : null;
+      return `<div class="s"><h3>${t}</h3><p class="small muted">${d}</p>
+        <span class="end">${fin != null ? r0(fin) + "%" : "−" + r0(F.total[k]) + "%"}</span>${fin != null ? battBar(fin) : ""}
+        <div class="small legs" style="font-variant-numeric:tabular-nums">${F.rows.map((r) => `Sau chặng ${r.i + 1}: ${r.after ? r0(r.after[k]) + "%" : "−" + r0(r.cum[k]) + "%"}`).join(" · ")}</div></div>`;
+    };
+    h += `<div class="card"><h2>C. Ba kịch bản</h2><div class="scen">${col("fav", "Thuận lợi", "Đường thoáng, ít dừng.")}${col("norm", "Bình thường", "Như bạn hay đi.")}${col("adv", "Bất lợi", "Đông, dừng nhiều, cầu dốc.")}</div>
+      <p class="small muted">${F.end ? "Số lớn là pin còn lại khi đến điểm cuối; dòng nhỏ là pin sau từng chặng." : "Chưa có pin xuất phát: các số là % pin sẽ tốn."}</p></div>`;
+  }
+  const label = { ok: "Đủ pin", warn: "Cần chú ý", bad: "Cần sạc", unknown: "Chưa đủ dữ liệu" }[V.level];
+  h += `<div class="card"><h2>D. Đánh giá</h2><p><span class="pill ${V.level}">${label}</span></p><p>${esc(V.text)}</p>
+    ${F.needed ? `<p class="small">Pin tối thiểu nên có khi đi: <b class="num">${Math.min(100, F.needed.norm)}%</b> (bình thường) · <b class="num">${Math.min(100, F.needed.adv)}%</b> (nếu đường đông). ${F.needed.adv > 100 ? "Đi giờ đông thì một lần sạc đầy có thể không đủ để giữ mức dự phòng." : ""}</p>` : ""}
+    <p class="small muted">Mức dự phòng: ${state.settings.reserve}% (đổi trong tab Hồ sơ). Đây là ước tính từ dữ liệu của chính xe bạn.</p></div>`;
+
+  const need = [];
+  if (F.start == null) need.push("Pin lúc xuất phát.");
+  F.rows.forEach((r) => {
+    if (!r.f.ok) need.push(`Chặng ${r.i + 1}: quãng đường (bấm “Tra km”).`);
+    else if (!r.f.hist && r.pl.kmSource === "estimate") need.push(`Chặng ${r.i + 1}: thay km ước tính bằng số trên bản đồ.`);
+  });
+  p.stops.forEach((s, i) => { if (s.addr && s.lat == null) need.push(`${i === 0 ? "Điểm xuất phát" : "Điểm " + i}: bấm “Tìm” để xác nhận đúng địa điểm.`); });
+  h += `<div class="card"><h2>E. Cần bổ sung</h2>${need.length ? `<ul class="clean">${need.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>` : "<p>Đủ thông tin. Đi xong mỗi chặng, bấm “Ghi pin thực tế chặng này”.</p>"}</div>`;
+  $("#planBody").innerHTML = h;
+  drawMap();
+}
+
+/* ---------- Ghi chặng ---------- */
+const newDraft = () => ({ date: today(), order: 1, from: blankStop(), to: blankStop(), route: "", km: "", kmSource: "osm", pinStart: "", pinEnd: "", traffic: "normal", bridge: false, durationMin: "", predicted: "", note: "" });
+function renderLog() {
+  if (!ui.logDraft) ui.logDraft = newDraft();
+  const d = ui.logDraft;
+  const used = d.pinStart !== "" && d.pinEnd !== "" ? Number(d.pinStart) - Number(d.pinEnd) : null;
+  const dev = used != null && d.predicted !== "" ? used - Number(d.predicted) : null;
+  $("#view-log").innerHTML = `<form id="logForm" class="card" novalidate><h2>Ghi kết quả một chặng</h2>
+    <p class="small muted">Ghi ngay khi đến nơi: pin lúc đi, pin lúc đến, đường đông không, có lên cầu không.</p>
+    <div class="row"><label>Ngày<input id="g-date" name="date" type="date" value="${esc(d.date)}"></label><label style="flex:0 1 110px">Chặng số<input id="g-order" class="num" name="order" type="number" inputmode="numeric" min="1" value="${esc(d.order)}"></label></div>
+    <div class="row"><label>Từ<input id="g-fn" name="from.name" value="${esc(d.from.name)}" placeholder="Tên"></label><label style="flex:2 1 180px">Địa chỉ đi<input id="g-fa" name="from.addr" value="${esc(d.from.addr)}"></label></div>
+    <div class="row"><label>Đến<input id="g-tn" name="to.name" value="${esc(d.to.name)}" placeholder="Tên"></label><label style="flex:2 1 180px">Địa chỉ đến<input id="g-ta" name="to.addr" value="${esc(d.to.addr)}"></label></div>
+    <div class="row">
+      <label>Pin lúc đi (%)<input id="g-ps" class="num" name="pinStart" type="number" inputmode="numeric" min="0" max="100" value="${esc(d.pinStart)}"></label>
+      <label>Pin lúc đến (%)<input id="g-pe" class="num" name="pinEnd" type="number" inputmode="numeric" min="0" max="100" value="${esc(d.pinEnd)}"></label>
+    </div>
+    <div class="row">
+      <label>Km<input id="g-km" class="num" name="km" type="number" inputmode="decimal" step="0.1" min="0" value="${esc(d.km)}" placeholder="trống nếu chưa biết"></label>
+      <label>Nguồn km<select id="g-src" name="kmSource">${["osm", "maps", "measured", "estimate"].map((k) => `<option value="${k}"${d.kmSource === k ? " selected" : ""}>${SOURCES[k]}</option>`).join("")}</select></label>
+    </div>
+    <div class="row">
+      <label>Giao thông<select id="g-tr" name="traffic">${Object.entries(TRAFFIC).map(([k, v]) => `<option value="${k}"${d.traffic === k ? " selected" : ""}>${v}</option>`).join("")}</select></label>
+      <label>Chạy mất (phút)<input id="g-dur" class="num" name="durationMin" type="number" inputmode="numeric" min="0" value="${esc(d.durationMin)}"></label>
+    </div>
+    <div class="row">
+      <label>Dự báo trước đó (% tốn)<input id="g-pred" class="num" name="predicted" type="number" inputmode="numeric" value="${esc(d.predicted)}" placeholder="nếu có"></label>
+      <label class="check" style="flex:0 0 auto"><input id="g-br" name="bridge" type="checkbox"${d.bridge ? " checked" : ""}>Có cầu / dốc</label>
+    </div>
+    <label>Tuyến đã đi<input id="g-route" name="route" value="${esc(d.route)}"></label>
+    <label>Ghi chú<textarea id="g-note" name="note" rows="2">${esc(d.note)}</textarea></label>
+    <div class="hint ${dev != null && Math.abs(dev) >= 4 ? "warn" : used != null && used < 0 ? "bad" : ""}">${used == null ? "Nhập pin lúc đi và lúc đến để tính mức tiêu hao." : used < 0 ? "Pin lúc đến lớn hơn lúc đi. Kiểm tra lại (hoặc có sạc giữa chặng)." : `Tiêu hao <b class="num">${used}%</b>${Number(d.km) > 0 ? ` · <span class="num">${fmt(used / Number(d.km), 2)}%/km</span>` : ""}${dev != null ? ` · lệch dự báo <b class="num">${dev > 0 ? "+" : ""}${r0(dev)} điểm %</b> (${dev > 0 ? "tốn hơn dự báo" : dev < 0 ? "ít tốn hơn" : "đúng dự báo"})` : ""}`}</div>
+    <div class="row"><button class="btn primary" type="submit" style="flex:1">Lưu chặng</button><button class="btn" type="button" data-act="draft-reset">Làm lại</button></div>
+  </form>`;
+}
+
+/* ---------- Nhật ký ---------- */
+function renderHistory() {
+  const L = [...state.legs].sort((a, b) => (b.date || "").localeCompare(a.date || "") || (b.order || 0) - (a.order || 0));
+  let h = `<div class="card"><h2>Nhật ký tiêu hao</h2>
+    <p class="small muted">Không bao giờ tự xoá dữ liệu cũ. Mỗi chặng ghi rõ km lấy từ đâu.</p>`;
+  if (!L.length) h += `<p class="muted">Chưa có chặng nào. Ghi chặng đầu tiên ở tab “Ghi chặng”, hoặc nhập file sao lưu ở tab “Hồ sơ”.</p>`;
+  L.forEach((l) => {
+    const u = usedOf(l), km = Number(l.km) > 0 ? Number(l.km) : null, src = km ? l.kmSource || "none" : "none";
+    const dev = u != null && l.predicted != null && l.predicted !== "" ? u - Number(l.predicted) : null;
+    const nm = `${l.from?.name || l.from?.addr || ""}${l.to?.name || l.to?.addr ? " → " + (l.to.name || l.to.addr) : ""}`;
+    h += `<div class="entry"><div class="top"><b>${esc(nm || "Chặng")}</b><span class="num"><b>${u != null ? u + "%" : "—"}</b></span></div>
+      <div class="meta"><span class="num">${dmy(l.date)}</span>${l.pinStart != null && l.pinStart !== "" ? `<span class="num">${esc(l.pinStart)}→${esc(l.pinEnd)}%</span>` : ""}
+        <span class="num">${km ? fmt(km) + " km" : "chưa có km"}</span><span class="chip k-${src}">${SOURCES[src] || src}</span>
+        ${km && u != null ? `<span class="num">${fmt(u / km, 2)}%/km</span>` : ""}${km && !usable(l, state.settings.includeEstimates) ? "<span>(không tính vào mô hình)</span>" : ""}
+        <span>${esc(TRAFFIC[l.traffic] || "")}${l.bridge ? " · cầu/dốc" : ""}${l.durationMin ? " · " + esc(l.durationMin) + "′" : ""}</span>
+        ${dev != null ? `<span>lệch dự báo <b class="num">${dev > 0 ? "+" : ""}${r0(dev)}</b></span>` : ""}</div>
+      ${l.route ? `<p class="small muted">${esc(l.route)}</p>` : ""}${l.note ? `<p class="small muted">${esc(l.note)}</p>` : ""}
+      ${ui.editId === l.id ? `<form id="editForm" data-id="${esc(l.id)}" class="row">
+          <label>Km<input id="e-km" class="num" name="km" type="number" inputmode="decimal" step="0.1" min="0" value="${esc(l.km ?? "")}"></label>
+          <label>Nguồn km<select id="e-src" name="kmSource">${["osm", "maps", "measured", "reported", "estimate"].map((k) => `<option value="${k}"${l.kmSource === k ? " selected" : ""}>${SOURCES[k]}</option>`).join("")}</select></label>
+          <label>Phút<input id="e-dur" class="num" name="durationMin" type="number" inputmode="numeric" min="0" value="${esc(l.durationMin ?? "")}"></label>
+          <label>Giao thông<select id="e-tr" name="traffic">${Object.entries(TRAFFIC).map(([k, v]) => `<option value="${k}"${l.traffic === k ? " selected" : ""}>${v}</option>`).join("")}</select></label>
+          <label class="check"><input id="e-br" name="bridge" type="checkbox"${l.bridge ? " checked" : ""}>Cầu/dốc</label>
+          <div class="actions"><button class="btn sm primary" type="submit">Lưu</button><button class="btn sm" type="button" data-act="edit-cancel">Huỷ</button></div>
+        </form>`
+        : `<div class="actions">${ui.confirmDel === l.id
+          ? `<button class="btn sm danger" data-act="del-yes" data-id="${esc(l.id)}" type="button">Xoá hẳn</button><button class="btn sm" data-act="del-no" type="button">Giữ lại</button>`
+          : `<button class="btn sm" data-act="edit" data-id="${esc(l.id)}" type="button">Sửa</button><button class="btn sm danger" data-act="del" data-id="${esc(l.id)}" type="button">Xoá</button>`}</div>`}
+    </div>`;
+  });
+  h += `</div>`;
+  const c = calibration(state.legs);
+  h += `<div class="card"><h2>Dự báo so với thực tế</h2>${c ? `<div class="stats">
+      <div class="stat"><span class="l">Số chặng so sánh</span><span class="v">${c.n}</span></div>
+      <div class="stat"><span class="l">Lệch trung bình</span><span class="v">${c.mean > 0 ? "+" : ""}${fmt(c.mean)}</span><span class="small muted">${c.mean > 1 ? "dự báo đang thấp hơn thực tế" : c.mean < -1 ? "dự báo đang cao hơn thực tế" : "khá sát"}</span></div>
+      <div class="stat"><span class="l">Sai số TB</span><span class="v">${fmt(c.mae)}</span><span class="small muted">điểm %</span></div></div>`
+    : `<p class="muted">Chưa có chặng nào có dự báo để so sánh. Đi theo lịch trình rồi bấm “Ghi pin thực tế chặng này”, số dự báo sẽ tự điền.</p>`}</div>`;
+  $("#view-history").innerHTML = h;
+}
+
+/* ---------- Hồ sơ ---------- */
+function renderSettings() {
+  const M = buildModel(state.legs, state.settings);
+  $("#view-settings").innerHTML = `<div class="card"><h2>Mô hình của xe bạn</h2><div class="stats">
+      <div class="stat"><span class="l">Mức gộp</span><span class="v">${fmt(M.R, 2)}%/km</span><span class="small muted">${fmt(M.sumU, 0)}% / ${fmt(M.sumK)} km</span></div>
+      <div class="stat"><span class="l">Số lần đo có km</span><span class="v">${M.pts.length}</span><span class="small muted">${M.pts.length < 6 ? "còn ít, dự báo chưa chắc" : "đã khá đủ"}</span></div>
+      <div class="stat"><span class="l">Thấp nhất</span><span class="v">${fmt(M.min, 2)}</span><span class="small muted">%/km · thuận lợi</span></div>
+      <div class="stat"><span class="l">Cao nhất</span><span class="v">${fmt(M.max, 2)}</span><span class="small muted">%/km · bất lợi</span></div>
+      <div class="stat"><span class="l">Tốc độ TB thực tế</span><span class="v">${M.speed ? fmt(M.speed) : "—"}</span><span class="small muted">${M.speed ? `km/h, từ ${M.speedN} chặng` : "chưa ghi thời gian chạy"}</span></div>
+    </div>
+    <p class="small muted">Xe 60V · 30Ah. 30 km/h là tốc độ tối đa thấy trên bản đồ, không phải tốc độ trung bình.</p>
+    <div class="row">
+      <label>Mức pin dự phòng (%)<input id="set-res" class="num" type="number" inputmode="numeric" min="0" max="60" value="${esc(state.settings.reserve)}"></label>
+      <label class="check" style="flex:1 1 220px"><input id="set-est" type="checkbox"${state.settings.includeEstimates ? " checked" : ""}>Tính cả km ước tính chưa xác minh</label>
+    </div></div>
+  <div class="card"><h2>Cách dự báo</h2><ul class="clean small">
+    <li>Chặng đã từng đi (cùng điểm đi, điểm đến): lấy số pin thực tế lần trước.</li>
+    <li>Chặng mới: km × mức %/km từ các lần đo. Có cầu hoặc đường đông thì dùng mức của các chặng tương tự khi đã có ít nhất 2 chặng như vậy.</li>
+    <li>Thuận lợi dùng mức thấp nhất đã đo; bất lợi dùng mức cao nhất (+10% nếu có cầu/đông).</li>
+    <li>Pin tính nối tiếp: pin đầu chặng sau = pin cuối chặng trước.</li>
+  </ul></div>
+  <div class="card"><h2>Sao lưu</h2>
+    <p class="small muted">Dữ liệu chỉ nằm trên điện thoại này. Nên xuất file sao lưu sau mỗi tuần (lưu vào Tệp hoặc gửi qua Zalo cho chính mình).</p>
+    <div class="row"><button class="btn primary" data-act="export" type="button" style="flex:1">Xuất file sao lưu</button>
+      <label class="btn" style="flex:1;flex-direction:row;color:var(--ink);font-size:.92rem">Nhập file<input id="importFile" type="file" accept="application/json,.json" hidden></label></div>
+    <p class="small muted">Nhập file sẽ thay toàn bộ dữ liệu hiện có trên máy bằng dữ liệu trong file.</p>
+  </div>`;
+}
+
+function renderAll() { renderPlan(); renderLog(); renderHistory(); renderSettings(); }
+
+/* ---------- hành động ---------- */
+async function doSearch(i) {
+  const s = state.plan.stops[i];
+  const q = (s.addr || s.name || "").trim();
+  if (!q) { toast("Nhập địa chỉ trước"); return; }
+  ui.searching[i] = true; renderPlan();
+  try { ui.results[i] = await searchPlace(q); }
+  catch (e) { ui.results[i] = undefined; toast(navigator.onLine ? e.message : "Không có mạng. Bạn vẫn nhập km tay được."); }
+  ui.searching[i] = false; renderPlan();
+}
+async function ensureLocated(i) {
+  const s = state.plan.stops[i];
+  if (s.lat != null) return true;
+  const q = (s.addr || s.name || "").trim();
+  if (!q) return false;
+  const res = await searchPlace(q);
+  if (!res.length) { ui.results[i] = []; return false; }
+  Object.assign(s, { lat: res[0].lat, lon: res[0].lon, label: res[0].label });
+  return true;
+}
+async function doRoute(i) {
+  ui.routing[i] = true; renderPlan();
+  try {
+    const okA = await ensureLocated(i), okB = await ensureLocated(i + 1);
+    if (!okA || !okB) throw new Error("Chưa định vị được địa chỉ. Ghi rõ số nhà, đường, quận rồi bấm “Tìm”.");
+    const alts = await route(state.plan.stops[i], state.plan.stops[i + 1]);
+    ui.routes[i] = alts;
+    const pl = state.plan.legs[i];
+    Object.assign(pl, { altIndex: 0, km: alts[0].km, mapsMin: alts[0].min, kmSource: "osm" });
+    persist();
+    toast(`Chặng ${i + 1}: ${fmt(alts[0].km)} km. Kiểm tra “Đã định vị” có đúng chỗ không.`);
+  } catch (e) { toast(navigator.onLine ? e.message : "Không có mạng. Bạn vẫn nhập km tay được."); }
+  ui.routing[i] = false; renderPlan();
+}
+async function doExport() {
+  const data = { app: "so-pin-xe-dien", version: 1, exportedAt: new Date().toISOString(), ...state };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+  const name = `so-pin-${today()}.json`;
+  const file = new File([blob], name, { type: "application/json" });
+  try {
+    if (navigator.canShare?.({ files: [file] })) { await navigator.share({ files: [file], title: "Sao lưu Sổ Pin" }); return; }
+  } catch (e) { if (e.name === "AbortError") return; }
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob); a.download = name; document.body.append(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+}
+async function doImport(file) {
+  try {
+    const v = validateImport(JSON.parse(await file.text()));
+    state.legs = v.legs;
+    if (v.plan) state.plan = v.plan;
+    if (v.settings) state.settings = { ...state.settings, ...v.settings };
+    ui.routes = {}; ui.results = {};
+    await save(state); renderAll();
+    toast(`Đã nhập ${v.legs.length} chặng`);
+  } catch (e) { toast(e.message || "Không đọc được file"); }
+}
+
+/* ---------- sự kiện ---------- */
+function setView(v) {
+  document.querySelectorAll(".tabbar button").forEach((b) => {
+    if (b.dataset.view === v) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current");
+  });
+  ["plan", "log", "history", "settings"].forEach((k) => ($("#view-" + k).hidden = k !== v));
+  if (v === "plan" && map) setTimeout(() => map.invalidateSize(), 50);
+  window.scrollTo(0, 0);
+}
+
+document.addEventListener("click", (e) => {
+  const t = e.target.closest("[data-view],[data-act]");
+  if (!t) return;
+  if (t.dataset.view) { setView(t.dataset.view); return; }
+  const a = t.dataset.act, i = Number(t.dataset.i), p = state.plan;
+  if (a !== "plan-clear") ui.confirmClear = false;
+  switch (a) {
+    case "search": doSearch(i); break;
+    case "pick": {
+      const r = ui.results[i][Number(t.dataset.k)];
+      Object.assign(p.stops[i], { lat: r.lat, lon: r.lon, label: r.label });
+      ui.results[i] = undefined; delete ui.routes[i - 1]; delete ui.routes[i];
+      persist(); renderPlan(); break;
+    }
+    case "route": doRoute(i); break;
+    case "alt": {
+      const k = Number(t.dataset.k), alt = ui.routes[i][k];
+      Object.assign(p.legs[i], { altIndex: k, km: alt.km, mapsMin: alt.min, kmSource: "osm" });
+      persist(); renderPlan(); break;
+    }
+    case "stop-add": p.stops.push(blankStop()); p.legs.push(blankLeg()); persist(); renderPlan(); break;
+    case "stop-del": p.stops.splice(i, 1); p.legs.splice(Math.min(i, p.legs.length - 1), 1); ui.routes = {}; ui.results = {}; persist(); renderPlan(); break;
+    case "plan-clear":
+      if (!ui.confirmClear) { ui.confirmClear = true; renderPlan(); break; }
+      ui.confirmClear = false; state.plan = emptyPlan(); ui.routes = {}; ui.results = {}; persist(); renderPlan(); break;
+    case "log-from-plan": {
+      const F = forecastPlan(state.legs, p, state.settings), r = F.rows[i];
+      const prev = i === 0 ? p.startPin : F.rows[i - 1].after ? r0(F.rows[i - 1].after.norm) : "";
+      const pick = (s) => ({ name: s.name, addr: s.addr, lat: s.lat, lon: s.lon, label: s.label });
+      ui.logDraft = { ...newDraft(), date: p.date || today(), order: i + 1, from: pick(r.a), to: pick(r.b), route: r.pl.route,
+        km: r.pl.km, kmSource: r.pl.kmSource, traffic: r.pl.traffic, bridge: r.pl.bridge, pinStart: prev ?? "", predicted: r.f.ok ? r0(r.f.norm) : "" };
+      renderLog(); setView("log"); break;
+    }
+    case "draft-reset": ui.logDraft = newDraft(); renderLog(); break;
+    case "edit": ui.editId = t.dataset.id; ui.confirmDel = null; renderHistory(); break;
+    case "edit-cancel": ui.editId = null; renderHistory(); break;
+    case "del": ui.confirmDel = t.dataset.id; renderHistory(); break;
+    case "del-no": ui.confirmDel = null; renderHistory(); break;
+    case "del-yes":
+      state.legs = state.legs.filter((l) => l.id !== t.dataset.id); ui.confirmDel = null;
+      persist(); renderAll(); toast("Đã xoá chặng"); break;
+    case "export": doExport(); break;
+  }
+});
+
+document.addEventListener("change", (e) => {
+  const t = e.target, p = state.plan;
+  if (t.id === "p-date") { p.date = t.value; persist(); return; }
+  if (t.id === "p-start") { p.startPin = t.value === "" ? "" : Math.max(0, Math.min(100, Number(t.value))); persist(); renderPlan(); return; }
+  if (t.dataset.stop != null) {
+    const i = Number(t.dataset.stop), s = p.stops[i];
+    s[t.dataset.f] = t.value;
+    if (t.dataset.f === "addr") { Object.assign(s, { lat: null, lon: null, label: "" }); delete ui.routes[i - 1]; delete ui.routes[i]; }
+    persist(); renderPlan(); return;
+  }
+  if (t.dataset.leg != null) { p.legs[Number(t.dataset.leg)][t.dataset.f] = t.type === "checkbox" ? t.checked : t.value; persist(); renderPlan(); return; }
+  if (t.form?.id === "logForm") {
+    const d = ui.logDraft, v = t.type === "checkbox" ? t.checked : t.value;
+    if (t.name.includes(".")) { const [o, k] = t.name.split("."); d[o][k] = v; if (k === "addr") Object.assign(d[o], { lat: null, lon: null }); }
+    else d[t.name] = v;
+    renderLog(); return;
+  }
+  if (t.id === "set-res") { state.settings.reserve = Math.max(0, Math.min(60, Number(t.value) || 0)); persist(); renderAll(); return; }
+  if (t.id === "set-est") { state.settings.includeEstimates = t.checked; persist(); renderAll(); return; }
+  if (t.id === "importFile" && t.files[0]) { doImport(t.files[0]); t.value = ""; }
+});
+
+document.addEventListener("keydown", (e) => {
+  const t = e.target;
+  if (e.key === "Enter" && t.dataset?.stop != null && t.dataset.f === "addr") {
+    e.preventDefault(); t.blur(); doSearch(Number(t.dataset.stop));
+  }
+});
+
+document.addEventListener("submit", (e) => {
+  e.preventDefault();
+  const f = e.target;
+  if (f.id === "logForm") {
+    const d = ui.logDraft;
+    if (d.pinStart === "" || d.pinEnd === "") { toast("Cần nhập pin lúc đi và lúc đến"); return; }
+    const n = (v) => (v === "" || v == null ? null : Number(v));
+    const rec = { id: "leg-" + Date.now().toString(36), date: d.date, order: Number(d.order) || 1,
+      from: { ...d.from, name: d.from.name.trim(), addr: d.from.addr.trim() }, to: { ...d.to, name: d.to.name.trim(), addr: d.to.addr.trim() },
+      route: d.route.trim(), km: n(d.km), kmSource: d.km === "" ? "none" : d.kmSource, pinStart: Number(d.pinStart), pinEnd: Number(d.pinEnd),
+      traffic: d.traffic, bridge: !!d.bridge, durationMin: n(d.durationMin), predicted: n(d.predicted), note: d.note.trim(), createdAt: new Date().toISOString() };
+    state.legs.push(rec);
+    ui.logDraft = { ...newDraft(), date: d.date, order: rec.order + 1, from: { ...rec.to }, pinStart: rec.pinEnd };
+    persist(); renderAll(); setView("history"); toast("Đã lưu chặng");
+  } else if (f.id === "editForm") {
+    const fd = new FormData(f), l = state.legs.find((x) => x.id === f.dataset.id);
+    if (!l) return;
+    l.km = fd.get("km") === "" ? null : Number(fd.get("km"));
+    l.kmSource = l.km == null ? "none" : fd.get("kmSource");
+    l.durationMin = fd.get("durationMin") === "" ? null : Number(fd.get("durationMin"));
+    l.traffic = fd.get("traffic"); l.bridge = !!fd.get("bridge");
+    ui.editId = null; persist(); renderAll(); toast("Đã cập nhật");
+  }
+});
+
+/* ---------- khởi động ---------- */
+(async function boot() {
+  const saved = await load();
+  if (saved) state = { ...state, ...saved, settings: { ...state.settings, ...(saved.settings || {}) } };
+  initMap();
+  renderAll();
+  const standalone = window.matchMedia("(display-mode: standalone)").matches || navigator.standalone;
+  const ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  let hide = false; try { hide = localStorage.getItem("hideInstall") === "1"; } catch {}
+  if (ios && !standalone && !hide) $("#installHint").hidden = false;
+  $("#installClose").addEventListener("click", () => { $("#installHint").hidden = true; try { localStorage.setItem("hideInstall", "1"); } catch {} });
+  if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
+})();

@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Sổ Pin Xe Điện</title>
+<meta name="description" content="Theo dõi và dự báo pin xe điện theo từng chặng đường.">
+<meta name="theme-color" content="#0f6b55" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0f1513" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Sổ Pin">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="vendor/leaflet/leaflet.css">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="appbar">
+  <div class="appbar-in">
+    <h1>Sổ Pin Xe Điện</h1>
+    <span class="chip num">60V · 30Ah</span>
+  </div>
+</header>
+
+<div id="installHint" class="install" hidden>
+  <b>Cài lên màn hình chính:</b> bấm nút <span aria-label="Chia sẻ">Chia sẻ</span> (ô vuông có mũi tên lên) ở thanh Safari → chọn <b>“Thêm vào MH chính”</b> → <b>Thêm</b>.
+  <button class="link" id="installClose" type="button">Ẩn</button>
+</div>
+
+<main>
+  <section id="view-plan" class="view">
+    <div id="map" class="map" role="img" aria-label="Bản đồ lịch trình"></div>
+    <div id="planBody"></div>
+  </section>
+  <section id="view-log" class="view" hidden></section>
+  <section id="view-history" class="view" hidden></section>
+  <section id="view-settings" class="view" hidden></section>
+</main>
+
+<div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+<nav class="tabbar" aria-label="Chuyển màn hình">
+  <button data-view="plan" aria-current="page"><span class="ti">◎</span>Dự báo</button>
+  <button data-view="log"><span class="ti">＋</span>Ghi chặng</button>
+  <button data-view="history"><span class="ti">≡</span>Nhật ký</button>
+  <button data-view="settings"><span class="ti">⚙</span>Hồ sơ</button>
+</nav>
+
+<script src="vendor/leaflet/leaflet.js"></script>
+<script type="module" src="app.js"></script>
+</body>
+</html>
