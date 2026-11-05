@@ -15,7 +15,7 @@ const blankLeg = () => ({ km: "", kmSource: "osm", mapsMin: "", traffic: "normal
 const emptyPlan = () => ({ date: "", startPin: "", stops: [blankStop(), blankStop()], legs: [blankLeg()] });
 
 let state = { legs: [], plan: emptyPlan(), settings: { reserve: 20, includeEstimates: false } };
-const ui = { results: {}, searching: {}, routes: {}, routing: {}, logDraft: null, editId: null, confirmDel: null, confirmClear: false };
+const ui = { results: {}, searching: {}, routes: {}, routing: {}, pickOnMap: null, logDraft: null, editId: null, confirmDel: null, confirmClear: false };
 
 // Lưu ngay mỗi lần thay đổi, lần lượt từng lần (người dùng có thể tắt app bất cứ lúc nào).
 let saving = Promise.resolve();
@@ -29,6 +29,14 @@ function initMap() {
   map = L.map("map", { zoomControl: false, attributionControl: true }).setView([10.78, 106.69], 12);
   L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: "© OpenStreetMap" }).addTo(map);
   mapLayer = L.layerGroup().addTo(map);
+  map.on("click", (e) => {
+    const i = ui.pickOnMap;
+    if (i == null || !state.plan.stops[i]) return;
+    const lat = Math.round(e.latlng.lat * 1e6) / 1e6, lon = Math.round(e.latlng.lng * 1e6) / 1e6;
+    Object.assign(state.plan.stops[i], { lat, lon, approx: false, label: `Điểm chọn trên bản đồ (${lat.toFixed(5)}, ${lon.toFixed(5)})` });
+    ui.pickOnMap = null; ui.results[i] = undefined; delete ui.routes[i - 1]; delete ui.routes[i];
+    persist(); renderPlan(); toast("Đã đặt vị trí. Bấm “Tra km” ở chặng tương ứng.");
+  });
 }
 function drawMap() {
   if (!map) return;
@@ -47,8 +55,11 @@ function drawMap() {
     const sel = alts[pl.altIndex ?? 0];
     if (sel?.geometry) L.geoJSON(sel.geometry, { style: { color: "#2b7de9", weight: 5, opacity: 0.85 } }).addTo(mapLayer);
   });
-  if (pts.length === 1) map.setView(pts[0], 14);
-  else if (pts.length > 1) map.fitBounds(pts, { padding: [28, 28] });
+  $("#map").classList.toggle("picking", ui.pickOnMap != null);
+  if (ui.pickOnMap == null) {
+    if (pts.length === 1) map.setView(pts[0], 14);
+    else if (pts.length > 1) map.fitBounds(pts, { padding: [28, 28] });
+  }
   setTimeout(() => map.invalidateSize(), 50);
 }
 
@@ -67,12 +78,17 @@ function stopHTML(s, i) {
       <label style="flex:0 1 104px">${i === 0 ? "Giờ đi" : "Giờ rời"}<input id="s-time-${i}" data-stop="${i}" data-f="time" type="time" value="${esc(s.time)}"></label>
     </div>
     <div class="row">
-      <label style="flex:1 1 200px">Địa chỉ (ghi kèm quận)<input id="s-addr-${i}" data-stop="${i}" data-f="addr" value="${esc(s.addr)}" placeholder="vd: 527 Điện Biên Phủ, Quận 3" enterkeyhint="search"></label>
+      <label style="flex:1 1 200px">Địa chỉ hoặc tên địa điểm<input id="s-addr-${i}" data-stop="${i}" data-f="addr" value="${esc(s.addr)}" placeholder="vd: Co.opmart Huỳnh Tấn Phát" enterkeyhint="search"></label>
       <button class="btn sm" data-act="search" data-i="${i}" type="button"${ui.searching[i] ? " disabled" : ""}>${ui.searching[i] ? "Đang tìm…" : "Tìm"}</button>
-      ${state.plan.stops.length > 2 ? `<button class="btn sm danger" data-act="stop-del" data-i="${i}" type="button" aria-label="Xoá điểm ${i}">Xoá</button>` : ""}
     </div>
-    ${s.lat != null ? `<p class="resolved"><b>✓ Đã định vị:</b> ${esc(s.label || s.addr)}</p>` : s.addr ? `<p class="resolved">Chưa định vị. Bấm “Tìm” để chọn đúng địa điểm.</p>` : ""}
-    ${res ? (res.length ? `<div class="results">${res.map((r, k) => `<button type="button" data-act="pick" data-i="${i}" data-k="${k}">${esc(r.label)}</button>`).join("")}</div>` : `<p class="hint warn">Không tìm thấy. Thử ghi rõ số nhà, tên đường và quận.</p>`) : ""}
+    <div class="actions">
+      <button class="btn sm" data-act="map-pick" data-i="${i}" type="button"${ui.pickOnMap === i ? ' aria-pressed="true"' : ""}>${ui.pickOnMap === i ? "Đang chờ chạm bản đồ… (bấm để huỷ)" : "Chạm chọn trên bản đồ"}</button>
+      ${state.plan.stops.length > 2 ? `<button class="btn sm danger" data-act="stop-del" data-i="${i}" type="button" aria-label="Xoá điểm ${i}">Xoá điểm</button>` : ""}
+    </div>
+    ${s.lat != null ? `<p class="resolved"><b>✓ Đã định vị:</b> ${esc(s.label || s.addr)}${s.approx ? ' <span class="chip k-estimate">gần đúng</span>' : ""}</p>` : s.addr ? `<p class="resolved">Chưa định vị. Bấm “Tìm” hoặc chạm chọn trên bản đồ.</p>` : ""}
+    ${res ? (res.list.length ? `${res.approx ? `<p class="hint warn">Không tìm thấy đúng số nhà. Các kết quả dưới đây chỉ khớp tên đường, có thể lệch vài km. Nên gõ tên cửa hàng/trường/toà nhà, hoặc chạm chọn trên bản đồ.</p>` : ""}
+        <div class="results">${res.list.map((r, k) => `<button type="button" data-act="pick" data-i="${i}" data-k="${k}">${r.approx && !res.approx ? "≈ " : ""}${esc(r.label)}</button>`).join("")}</div>`
+      : `<p class="hint warn">Không tìm thấy. Thử gõ tên địa điểm (vd “Co.opmart Huỳnh Tấn Phát”), bỏ chữ “Quận…”, hoặc chạm chọn trên bản đồ.</p>`) : ""}
   </div></div>`;
 }
 
@@ -273,27 +289,35 @@ async function doSearch(i) {
   catch (e) { ui.results[i] = undefined; toast(navigator.onLine ? e.message : "Không có mạng. Bạn vẫn nhập km tay được."); }
   ui.searching[i] = false; renderPlan();
 }
+// Chỉ tự định vị khi có đúng một kết quả khớp chắc chắn; còn lại để người dùng chọn.
 async function ensureLocated(i) {
   const s = state.plan.stops[i];
   if (s.lat != null) return true;
   const q = (s.addr || s.name || "").trim();
   if (!q) return false;
   const res = await searchPlace(q);
-  if (!res.length) { ui.results[i] = []; return false; }
-  Object.assign(s, { lat: res[0].lat, lon: res[0].lon, label: res[0].label });
-  return true;
+  const sure = res.list.filter((r) => !r.approx);
+  if (sure.length === 1) {
+    Object.assign(s, { lat: sure[0].lat, lon: sure[0].lon, label: sure[0].label, approx: false });
+    ui.results[i] = undefined;
+    return true;
+  }
+  ui.results[i] = res;
+  return false;
 }
 async function doRoute(i) {
   ui.routing[i] = true; renderPlan();
   try {
     const okA = await ensureLocated(i), okB = await ensureLocated(i + 1);
-    if (!okA || !okB) throw new Error("Chưa định vị được địa chỉ. Ghi rõ số nhà, đường, quận rồi bấm “Tìm”.");
-    const alts = await route(state.plan.stops[i], state.plan.stops[i + 1]);
+    if (!okA || !okB) throw new Error("Chọn đúng địa điểm trong danh sách (hoặc chạm chọn trên bản đồ), rồi bấm “Tra km” lại.");
+    const a = state.plan.stops[i], b = state.plan.stops[i + 1];
+    const alts = await route(a, b);
     ui.routes[i] = alts;
     const pl = state.plan.legs[i];
-    Object.assign(pl, { altIndex: 0, km: alts[0].km, mapsMin: alts[0].min, kmSource: "osm" });
+    const approx = a.approx || b.approx;
+    Object.assign(pl, { altIndex: 0, km: alts[0].km, mapsMin: alts[0].min, kmSource: approx ? "estimate" : "osm" });
     persist();
-    toast(`Chặng ${i + 1}: ${fmt(alts[0].km)} km. Kiểm tra “Đã định vị” có đúng chỗ không.`);
+    toast(approx ? `Chặng ${i + 1}: ${fmt(alts[0].km)} km, nhưng có điểm chỉ gần đúng nên ghi là ước tính.` : `Chặng ${i + 1}: ${fmt(alts[0].km)} km`);
   } catch (e) { toast(navigator.onLine ? e.message : "Không có mạng. Bạn vẫn nhập km tay được."); }
   ui.routing[i] = false; renderPlan();
 }
@@ -340,15 +364,21 @@ document.addEventListener("click", (e) => {
   switch (a) {
     case "search": doSearch(i); break;
     case "pick": {
-      const r = ui.results[i][Number(t.dataset.k)];
-      Object.assign(p.stops[i], { lat: r.lat, lon: r.lon, label: r.label });
+      const r = ui.results[i].list[Number(t.dataset.k)];
+      Object.assign(p.stops[i], { lat: r.lat, lon: r.lon, label: r.label, approx: !!r.approx });
       ui.results[i] = undefined; delete ui.routes[i - 1]; delete ui.routes[i];
       persist(); renderPlan(); break;
     }
+    case "map-pick":
+      ui.pickOnMap = ui.pickOnMap === i ? null : i;
+      renderPlan();
+      if (ui.pickOnMap === i) { $("#map").scrollIntoView({ behavior: "smooth", block: "center" }); toast(`Chạm vào bản đồ để đặt vị trí ${i === 0 ? "điểm xuất phát" : "điểm " + i}`); }
+      break;
     case "route": doRoute(i); break;
     case "alt": {
       const k = Number(t.dataset.k), alt = ui.routes[i][k];
-      Object.assign(p.legs[i], { altIndex: k, km: alt.km, mapsMin: alt.min, kmSource: "osm" });
+      const approx = p.stops[i].approx || p.stops[i + 1].approx;
+      Object.assign(p.legs[i], { altIndex: k, km: alt.km, mapsMin: alt.min, kmSource: approx ? "estimate" : "osm" });
       persist(); renderPlan(); break;
     }
     case "stop-add": p.stops.push(blankStop()); p.legs.push(blankLeg()); persist(); renderPlan(); break;

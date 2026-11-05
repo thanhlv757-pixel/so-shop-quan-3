@@ -19,14 +19,57 @@ async function getJSON(url, signal) {
   return res.json();
 }
 
-/** Tìm địa chỉ. Trả về tối đa 5 kết quả {label, lat, lon}. */
-export async function searchPlace(q, signal) {
-  const text = String(q || "").trim();
+/**
+ * Các cách gõ lần lượt thử khi tìm. Dữ liệu OSM dùng tên phường mới sau sáp nhập
+ * và hầu như không có số nhà, nên bỏ dần "Quận/Phường" rồi bỏ số nhà.
+ * Trả về [{q, approx}] — approx = chỉ còn tên đường, vị trí có thể lệch xa.
+ */
+export function queryVariants(q) {
+  const text = String(q || "").trim().replace(/\s+/g, " ");
   if (!text) return [];
-  await politeWait();
-  const p = new URLSearchParams({ q: text, format: "jsonv2", countrycodes: "vn", "accept-language": "vi", limit: "5", viewbox: HCM_VIEWBOX, addressdetails: "0" });
-  const rows = await getJSON(`${NOMINATIM}?${p}`, signal);
-  return rows.map((r) => ({ label: r.display_name, lat: Number(r.lat), lon: Number(r.lon) }));
+  const noArea = text
+    .replace(/,?\s*\b(quận|q\.|huyện|h\.|phường|p\.|tp\.?|thành phố)\s*[^,]*/gi, "")
+    .replace(/,?\s*(hồ chí minh|hcm|sài gòn|saigon)\b/gi, "")
+    .replace(/^[,\s]+|[,\s]+$/g, "");
+  const mainNumber = noArea.replace(/^(\d+)\/[\w\/-]+/, "$1"); // 139/3 → 139 (hẻm thường không có trên OSM)
+  const noNumber = noArea.replace(/^(số\s*)?[\d][\w\/-]*\s+/i, "").trim();
+  const out = [];
+  const add = (q2, approx) => { if (q2 && !out.some((o) => o.q === q2)) out.push({ q: q2, approx }); };
+  add(text, false);
+  add(noArea, false);
+  add(mainNumber, false);
+  if (/^(số\s*)?\d/i.test(noArea)) add(noNumber, true);
+  return out;
+}
+
+/** Số nhà ở đầu câu tìm (vd "139/3 Phan..." → "139"), hoặc null. */
+export function houseNumber(q) {
+  const m = String(q || "").trim().match(/^(?:số\s*)?(\d+)/i);
+  return m ? m[1] : null;
+}
+
+/** Kết quả có khớp số nhà đã gõ không (OSM hay bỏ qua số nhà và trả về cả con đường). */
+export function matchesHouseNumber(label, num) {
+  if (!num) return true;
+  return new RegExp(`(^|[^\\d])${num}([^\\d]|$)`).test(label);
+}
+
+/** Tìm địa điểm. Trả về {list: [{label, lat, lon, approx}], approx}. */
+export async function searchPlace(q, signal) {
+  const num = houseNumber(q);
+  for (const v of queryVariants(q)) {
+    await politeWait();
+    const p = new URLSearchParams({ q: v.q, format: "jsonv2", countrycodes: "vn", "accept-language": "vi", limit: "5", viewbox: HCM_VIEWBOX, bounded: "1" });
+    const rows = await getJSON(`${NOMINATIM}?${p}`, signal);
+    if (!rows.length) continue;
+    const list = rows.map((r) => ({
+      label: r.display_name, lat: Number(r.lat), lon: Number(r.lon),
+      approx: v.approx || !matchesHouseNumber(r.display_name, num),
+    }));
+    list.sort((a, b) => a.approx - b.approx);
+    return { list, approx: list.every((x) => x.approx) };
+  }
+  return { list: [], approx: false };
 }
 
 /** Tính tuyến giữa hai điểm có tọa độ. Trả về các tuyến {km, min, geometry}. */

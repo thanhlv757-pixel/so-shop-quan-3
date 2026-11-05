@@ -1,5 +1,5 @@
 // Cho app mở được khi không có mạng. Đổi VERSION mỗi lần cập nhật file.
-const VERSION = "so-pin-v1";
+const VERSION = "so-pin-v2";
 const SHELL = [
   "./", "index.html", "styles.css", "app.js", "model.js", "maps.js", "store.js", "manifest.webmanifest",
   "icons/icon-180.png", "icons/icon-192.png", "icons/icon-512.png",
