@@ -10,6 +10,8 @@ export const SOURCES = {
 };
 export const TRAFFIC = { clear: "Thông thoáng", normal: "Bình thường", busy: "Hơi đông", jam: "Đông / kẹt" };
 export const isHeavy = (t) => t === "busy" || t === "jam";
+/** Chặng dưới mức này tính riêng: hay dừng đèn, tăng tốc lại, và sai số làm tròn % lớn. */
+export const SHORT_KM = 5;
 
 const num = (v) => (v === "" || v == null || !isFinite(Number(v)) ? null : Number(v));
 
@@ -39,17 +41,28 @@ export function buildModel(legs, { includeEstimates = false } = {}) {
   const pts = legs.filter((l) => usable(l, includeEstimates));
   const sumU = pts.reduce((s, l) => s + usedOf(l), 0);
   const sumK = pts.reduce((s, l) => s + Number(l.km), 0);
-  const rates = pts.map((l) => usedOf(l) / Number(l.km));
+  // Thuận lợi / bất lợi lấy từ chặng dài khi đã có ít nhất 2 chặng dài.
+  const longPts = pts.filter((l) => Number(l.km) >= SHORT_KM);
+  const base = longPts.length >= 2 ? longPts : pts; // dùng cho dự báo chặng dài
+  const rates = base.map((l) => usedOf(l) / Number(l.km));
+  const baseU = base.reduce((s, l) => s + usedOf(l), 0), baseK = base.reduce((s, l) => s + Number(l.km), 0);
+  const shortPts = pts.filter((l) => Number(l.km) < SHORT_KM);
+  const shortRates = shortPts.map((l) => usedOf(l) / Number(l.km));
+  const short = groupRate(pts, (l) => Number(l.km) < SHORT_KM);
+  if (short.rate != null) { short.min = Math.min(...shortRates); short.max = Math.max(...shortRates); }
   const sp = legs.filter((l) => num(l.km) > 0 && num(l.durationMin) > 0 && (l.kmSource !== "estimate" || includeEstimates));
   const spK = sp.reduce((s, l) => s + Number(l.km), 0), spM = sp.reduce((s, l) => s + Number(l.durationMin), 0);
   return {
     pts, sumU, sumK,
-    R: sumK > 0 ? sumU / sumK : null,
+    RAll: sumK > 0 ? sumU / sumK : null, // mức chung của mọi chặng (để hiển thị)
+    R: baseK > 0 ? baseU / baseK : null, // mức gộp dùng cho chặng dài
     min: rates.length ? Math.min(...rates) : null,
     max: rates.length ? Math.max(...rates) : null,
-    heavy: groupRate(pts, (l) => isHeavy(l.traffic)),
-    light: groupRate(pts, (l) => !isHeavy(l.traffic) && !l.bridge),
-    bridge: groupRate(pts, (l) => !!l.bridge),
+    heavy: groupRate(base, (l) => isHeavy(l.traffic)),
+    light: groupRate(base, (l) => !isHeavy(l.traffic) && !l.bridge),
+    bridge: groupRate(base, (l) => !!l.bridge),
+    short,
+    longN: longPts.length,
     speed: spM > 0 ? spK / (spM / 60) : null,
     speedN: sp.length,
   };
@@ -95,6 +108,11 @@ export function forecastLeg(M, legs, pl, from, to) {
   if (!(km > 0)) return { ok: false, basis: ["Thiếu quãng đường: bấm “Tra km” hoặc nhập tay"] };
   if (M.R == null) return { ok: false, basis: ["Chưa có lần đo nào có km để tính"] };
   const heavy = isHeavy(pl.traffic);
+  if (km < SHORT_KM && M.short.rate != null) {
+    basis.push(`Chặng ngắn dưới ${SHORT_KM} km: dùng mức của ${M.short.n} chặng ngắn đã đi (${fmt2(M.short.rate)}%/km)`);
+    if (pl.kmSource === "estimate") basis.push("Số km là ước tính, độ tin cậy thấp");
+    return { ok: true, fav: km * M.short.min, norm: km * M.short.rate, adv: km * M.short.max * (heavy || pl.bridge ? 1.1 : 1), basis };
+  }
   let rate = M.R;
   if (pl.bridge && M.bridge.rate != null) { rate = M.bridge.rate; basis.push(`Có cầu: dùng mức của ${M.bridge.n} chặng có cầu (${fmt2(rate)}%/km)`); }
   else if (heavy && M.heavy.rate != null) { rate = M.heavy.rate; basis.push(`Đường đông: dùng mức của ${M.heavy.n} chặng đông (${fmt2(rate)}%/km)`); }
@@ -159,4 +177,57 @@ export function calibration(legs) {
     mean: devs.reduce((a, b) => a + b, 0) / devs.length,
     mae: devs.reduce((a, b) => a + Math.abs(b), 0) / devs.length,
   };
+}
+
+/* ---------- ghi cả hành trình ---------- */
+// Độ tin cậy của nguồn km, cao → thấp. Gộp nhiều đoạn thì lấy nguồn kém nhất.
+const SOURCE_RANK = ["measured", "maps", "osm", "reported", "estimate", "none"];
+const TRAFFIC_RANK = ["clear", "normal", "busy", "jam"];
+const toMin = (t) => (/^\d{1,2}:\d{2}$/.test(t || "") ? Number(t.slice(0, -3)) * 60 + Number(t.slice(-2)) : null);
+const placeOf = (s) => ({ name: (s.name || "").trim(), addr: (s.addr || "").trim(), lat: s.lat ?? null, lon: s.lon ?? null, label: s.label || "" });
+
+/**
+ * Chuyển một hành trình nhiều điểm dừng thành các chặng để lưu.
+ * stops[i].pin = pin khi tới điểm i (điểm 0: pin lúc xuất phát); để trống nếu quên xem.
+ * stops[i].km/kmSource/traffic/bridge mô tả đoạn từ điểm i-1 tới điểm i.
+ * stops[i].arrive / leave = giờ tới / giờ rời (HH:MM), dùng tính thời gian chạy.
+ * Điểm quên xem pin được gộp vào chặng chứa nó (ghi trong `via`).
+ */
+export function journeyToLegs(j) {
+  const stops = j.stops || [];
+  if (stops.length < 2) throw new Error("Cần ít nhất 2 điểm.");
+  if (num(stops[0].pin) == null) throw new Error("Cần pin lúc xuất phát.");
+  if (num(stops[stops.length - 1].pin) == null) throw new Error("Cần pin ở điểm cuối.");
+  const legs = [];
+  let startIdx = 0;
+  for (let i = 1; i < stops.length; i++) {
+    if (num(stops[i].pin) == null) continue;
+    const hops = stops.slice(startIdx + 1, i + 1); // mỗi phần tử mô tả đoạn đi tới nó
+    const kmAll = hops.every((h) => num(h.km) > 0);
+    const durs = hops.map((h, k) => {
+      const from = stops[startIdx + k];
+      const a = toMin(from.leave), b = toMin(h.arrive);
+      return a != null && b != null && b >= a ? b - a : null;
+    });
+    const src = kmAll ? hops.map((h) => h.kmSource || "estimate").reduce((w, s) => (SOURCE_RANK.indexOf(s) > SOURCE_RANK.indexOf(w) ? s : w), "measured") : "none";
+    legs.push({
+      date: j.date || "",
+      order: legs.length + 1,
+      from: placeOf(stops[startIdx]),
+      to: placeOf(stops[i]),
+      via: stops.slice(startIdx + 1, i).map(placeOf),
+      route: hops.map((h) => h.route).filter(Boolean).join(" → "),
+      km: kmAll ? Math.round(hops.reduce((s, h) => s + Number(h.km), 0) * 10) / 10 : null,
+      kmSource: src,
+      pinStart: num(stops[startIdx].pin),
+      pinEnd: num(stops[i].pin),
+      traffic: hops.map((h) => h.traffic || "normal").reduce((w, t) => (TRAFFIC_RANK.indexOf(t) > TRAFFIC_RANK.indexOf(w) ? t : w), "clear"),
+      bridge: hops.some((h) => !!h.bridge),
+      durationMin: durs.every((d) => d != null) ? durs.reduce((a, b) => a + b, 0) : null,
+      predicted: null,
+      note: (j.note || "").trim(),
+    });
+    startIdx = i;
+  }
+  return legs;
 }

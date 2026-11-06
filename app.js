@@ -1,4 +1,4 @@
-import { SOURCES, TRAFFIC, usedOf, usable, forecastPlan, verdict, calibration, buildModel } from "./model.js";
+import { SOURCES, TRAFFIC, SHORT_KM, usedOf, usable, forecastPlan, verdict, calibration, buildModel, journeyToLegs } from "./model.js";
 import { searchPlace, route, googleMapsLink } from "./maps.js";
 import { load, save, validateImport } from "./store.js";
 
@@ -15,7 +15,7 @@ const blankLeg = () => ({ km: "", kmSource: "osm", mapsMin: "", traffic: "normal
 const emptyPlan = () => ({ date: "", startPin: "", stops: [blankStop(), blankStop()], legs: [blankLeg()] });
 
 let state = { legs: [], plan: emptyPlan(), settings: { reserve: 20, includeEstimates: false } };
-const ui = { results: {}, searching: {}, routes: {}, routing: {}, pickOnMap: null, logDraft: null, editId: null, confirmDel: null, confirmClear: false };
+const ui = { results: {}, searching: {}, routes: {}, routing: {}, pickOnMap: null, logMode: "journey", logDraft: null, journey: null, jRouting: null, editId: null, confirmDel: null, confirmClear: false };
 
 // Lưu ngay mỗi lần thay đổi, lần lượt từng lần (người dùng có thể tắt app bất cứ lúc nào).
 let saving = Promise.resolve();
@@ -42,10 +42,11 @@ function drawMap() {
   if (!map) return;
   mapLayer.clearLayers();
   const pts = [];
+  const accent = getComputedStyle(document.documentElement).getPropertyValue("--accent").trim() || "#0f6b55";
   state.plan.stops.forEach((s, i) => {
     if (s.lat == null) return;
     pts.push([s.lat, s.lon]);
-    L.circleMarker([s.lat, s.lon], { radius: 9, color: "#0f6b55", fillColor: "#0f6b55", fillOpacity: 1, weight: 2 })
+    L.circleMarker([s.lat, s.lon], { radius: 9, color: accent, fillColor: accent, fillOpacity: 1, weight: 2 })
       .bindTooltip(i === 0 ? "A" : String(i), { permanent: true, direction: "center", className: "" })
       .addTo(mapLayer);
   });
@@ -176,11 +177,98 @@ function renderPlan() {
 /* ---------- Ghi chặng ---------- */
 const newDraft = () => ({ date: today(), order: 1, from: blankStop(), to: blankStop(), route: "", km: "", kmSource: "osm", pinStart: "", pinEnd: "", traffic: "normal", bridge: false, durationMin: "", predicted: "", note: "" });
 function renderLog() {
+  const seg = `<div class="seg" role="group" aria-label="Cách ghi">
+      <button type="button" data-act="mode-journey" aria-pressed="${ui.logMode === "journey"}">Cả hành trình</button>
+      <button type="button" data-act="mode-single" aria-pressed="${ui.logMode !== "journey"}">Một chặng</button></div>`;
+  $("#view-log").innerHTML = seg + (ui.logMode === "journey" ? journeyHTML() : singleLogHTML());
+}
+
+/* ---------- Ghi cả hành trình ---------- */
+const blankJStop = () => ({ name: "", addr: "", lat: null, lon: null, label: "", pin: "", arrive: "", leave: "", km: "", kmSource: "osm", traffic: "normal", bridge: false });
+const newJourney = () => ({ date: today(), note: "", stops: [blankJStop(), blankJStop()] });
+
+function journeyPreview(j) {
+  try {
+    const legs = journeyToLegs(j);
+    return { legs, html: `<div class="preview">${legs.map((l) => {
+      const u = l.pinStart - l.pinEnd;
+      if (u <= 0) return `<p class="hint warn">${esc(l.from.name || "?")} → ${esc(l.to.name || "?")}: pin không giảm (${l.pinStart}→${l.pinEnd}%). Có sạc giữa đường không? Kiểm tra lại số; chặng này sẽ không được tính vào mô hình.</p>`;
+      return `<div class="pv"><span>${esc(l.from.name || l.from.addr || "?")} → ${esc(l.to.name || l.to.addr || "?")}${l.via.length ? `<br><span class="small muted">qua ${l.via.map((v) => esc(v.name || v.addr || "?")).join(", ")} (không biết pin ở đó)</span>` : ""}</span>
+        <span class="num" style="text-align:right">${l.pinStart}→${l.pinEnd}% · <b>${u}%</b><br><span class="small muted">${l.km ? `${fmt(l.km)} km · ${fmt(u / l.km, 2)}%/km` : "chưa đủ km"}${l.durationMin ? ` · ${l.durationMin}′` : ""}</span></span></div>`;
+    }).join("")}</div>` };
+  } catch (e) { return { legs: null, html: `<p class="hint warn">${esc(e.message)}</p>` }; }
+}
+
+function journeyHTML() {
+  if (!ui.journey) ui.journey = newJourney();
+  const j = ui.journey, n = j.stops.length;
+  const pv = journeyPreview(j);
+  let h = `<div class="card"><h2>Ghi cả hành trình</h2>
+    <p class="small muted">Ghi các điểm đã đi theo thứ tự. Điểm nào quên xem pin thì để trống: app tự gộp chặng qua điểm đó.</p>
+    <div class="row"><label>Ngày<input id="j-date" data-j="date" type="date" value="${esc(j.date)}"></label>
+      <button class="btn sm" type="button" data-act="j-from-plan">Lấy điểm từ lịch trình</button></div>`;
+  j.stops.forEach((s, i) => {
+    if (i > 0) {
+      h += `<div class="jhop"><div class="row">
+        <label>Km đoạn ${i}<input id="j-km-${i}" class="num" data-js="${i}" data-f="km" type="number" inputmode="decimal" step="0.1" min="0" value="${esc(s.km)}"></label>
+        <label>Nguồn km<select id="j-src-${i}" data-js="${i}" data-f="kmSource">${["osm", "maps", "measured", "estimate"].map((k) => `<option value="${k}"${s.kmSource === k ? " selected" : ""}>${SOURCES[k]}</option>`).join("")}</select></label>
+        <button class="btn sm" type="button" data-act="j-route" data-i="${i}"${ui.jRouting === i ? " disabled" : ""}>${ui.jRouting === i ? "Đang tra…" : "Tra km"}</button>
+      </div><div class="row">
+        <label>Giao thông<select id="j-tr-${i}" data-js="${i}" data-f="traffic">${Object.entries(TRAFFIC).map(([k, v]) => `<option value="${k}"${s.traffic === k ? " selected" : ""}>${v}</option>`).join("")}</select></label>
+        <label class="check" style="flex:0 0 auto"><input id="j-br-${i}" data-js="${i}" data-f="bridge" type="checkbox"${s.bridge ? " checked" : ""}>Có cầu / dốc</label>
+      </div></div>`;
+    }
+    h += `<div class="jstop"><div class="dot">${i === 0 ? "A" : i}</div><div class="stopf">
+      <div class="row">
+        <label>${i === 0 ? "Xuất phát" : "Điểm " + i}<input id="j-name-${i}" data-js="${i}" data-f="name" value="${esc(s.name)}" placeholder="Tên"></label>
+        <label style="flex:2 1 170px">Địa chỉ / tên địa điểm<input id="j-addr-${i}" data-js="${i}" data-f="addr" value="${esc(s.addr)}"></label>
+      </div>
+      <div class="row">
+        <label>${i === 0 ? "Pin lúc đi (%)" : "Pin khi tới (%)"}<input id="j-pin-${i}" class="num" data-js="${i}" data-f="pin" type="number" inputmode="numeric" min="0" max="100" value="${esc(s.pin)}" placeholder="${i === 0 || i === n - 1 ? "bắt buộc" : "quên thì để trống"}"></label>
+        ${i > 0 ? `<label style="flex:0 1 104px">Giờ tới<input id="j-arr-${i}" data-js="${i}" data-f="arrive" type="time" value="${esc(s.arrive)}"></label>` : ""}
+        ${i < n - 1 ? `<label style="flex:0 1 104px">Giờ rời<input id="j-lv-${i}" data-js="${i}" data-f="leave" type="time" value="${esc(s.leave)}"></label>` : ""}
+      </div>
+      ${s.lat != null ? `<p class="resolved"><b>✓</b> ${esc(s.label)}</p>` : ""}
+      ${n > 2 ? `<div><button class="btn sm danger" type="button" data-act="j-del" data-i="${i}">Xoá điểm này</button></div>` : ""}
+    </div></div>`;
+  });
+  h += `<button class="btn" type="button" data-act="j-add">+ Thêm điểm</button>
+    <label>Ghi chú chung<textarea id="j-note" data-j="note" rows="2">${esc(j.note)}</textarea></label>
+    <h3>Sẽ lưu thành</h3>${pv.html}
+    <div class="row"><button class="btn primary" type="button" data-act="j-save" style="flex:1"${pv.legs ? "" : " disabled"}>Lưu ${pv.legs ? pv.legs.length + " chặng" : ""}</button>
+      <button class="btn" type="button" data-act="j-reset">Làm lại</button></div>
+  </div>`;
+  return h;
+}
+
+/** Tra km cho đoạn tới điểm i: chỉ tự định vị khi có đúng một kết quả chắc chắn. */
+async function doJourneyRoute(i) {
+  const j = ui.journey;
+  ui.jRouting = i; renderLog();
+  try {
+    for (const k of [i - 1, i]) {
+      const s = j.stops[k];
+      if (s.lat != null) continue;
+      const q = (s.addr || s.name || "").trim();
+      if (!q) throw new Error(`Điểm ${k === 0 ? "xuất phát" : k}: nhập địa chỉ hoặc tên địa điểm trước.`);
+      const res = await searchPlace(q);
+      const sure = res.list.filter((r) => !r.approx);
+      if (sure.length !== 1) throw new Error(`Không xác định chắc chắn “${q}”. Gõ tên địa điểm rõ hơn (vd “Crescent Mall”) hoặc nhập km tay.`);
+      Object.assign(s, { lat: sure[0].lat, lon: sure[0].lon, label: sure[0].label });
+    }
+    const alts = await route(j.stops[i - 1], j.stops[i]);
+    Object.assign(j.stops[i], { km: alts[0].km, kmSource: "osm" });
+    toast(`Đoạn ${i}: ${fmt(alts[0].km)} km`);
+  } catch (e) { toast(navigator.onLine ? e.message : "Không có mạng. Bạn vẫn nhập km tay được."); }
+  ui.jRouting = null; renderLog();
+}
+
+function singleLogHTML() {
   if (!ui.logDraft) ui.logDraft = newDraft();
   const d = ui.logDraft;
   const used = d.pinStart !== "" && d.pinEnd !== "" ? Number(d.pinStart) - Number(d.pinEnd) : null;
   const dev = used != null && d.predicted !== "" ? used - Number(d.predicted) : null;
-  $("#view-log").innerHTML = `<form id="logForm" class="card" novalidate><h2>Ghi kết quả một chặng</h2>
+  return `<form id="logForm" class="card" novalidate><h2>Ghi kết quả một chặng</h2>
     <p class="small muted">Ghi ngay khi đến nơi: pin lúc đi, pin lúc đến, đường đông không, có lên cầu không.</p>
     <div class="row"><label>Ngày<input id="g-date" name="date" type="date" value="${esc(d.date)}"></label><label style="flex:0 1 110px">Chặng số<input id="g-order" class="num" name="order" type="number" inputmode="numeric" min="1" value="${esc(d.order)}"></label></div>
     <div class="row"><label>Từ<input id="g-fn" name="from.name" value="${esc(d.from.name)}" placeholder="Tên"></label><label style="flex:2 1 180px">Địa chỉ đi<input id="g-fa" name="from.addr" value="${esc(d.from.addr)}"></label></div>
@@ -224,6 +312,7 @@ function renderHistory() {
         ${km && u != null ? `<span class="num">${fmt(u / km, 2)}%/km</span>` : ""}${km && !usable(l, state.settings.includeEstimates) ? "<span>(không tính vào mô hình)</span>" : ""}
         <span>${esc(TRAFFIC[l.traffic] || "")}${l.bridge ? " · cầu/dốc" : ""}${l.durationMin ? " · " + esc(l.durationMin) + "′" : ""}</span>
         ${dev != null ? `<span>lệch dự báo <b class="num">${dev > 0 ? "+" : ""}${r0(dev)}</b></span>` : ""}</div>
+      ${l.via?.length ? `<p class="small muted">Qua: ${l.via.map((v) => esc(v.name || v.addr || "?")).join(", ")} (không biết pin ở đó)</p>` : ""}
       ${l.route ? `<p class="small muted">${esc(l.route)}</p>` : ""}${l.note ? `<p class="small muted">${esc(l.note)}</p>` : ""}
       ${ui.editId === l.id ? `<form id="editForm" data-id="${esc(l.id)}" class="row">
           <label>Km<input id="e-km" class="num" name="km" type="number" inputmode="decimal" step="0.1" min="0" value="${esc(l.km ?? "")}"></label>
@@ -252,7 +341,9 @@ function renderHistory() {
 function renderSettings() {
   const M = buildModel(state.legs, state.settings);
   $("#view-settings").innerHTML = `<div class="card"><h2>Mô hình của xe bạn</h2><div class="stats">
-      <div class="stat"><span class="l">Mức gộp</span><span class="v">${fmt(M.R, 2)}%/km</span><span class="small muted">${fmt(M.sumU, 0)}% / ${fmt(M.sumK)} km</span></div>
+      <div class="stat"><span class="l">Chặng dài (≥${SHORT_KM} km)</span><span class="v">${fmt(M.R, 2)}%/km</span><span class="small muted">${M.longN} chặng</span></div>
+      <div class="stat"><span class="l">Chặng ngắn (&lt;${SHORT_KM} km)</span><span class="v">${M.short.rate != null ? fmt(M.short.rate, 2) + "%/km" : "—"}</span><span class="small muted">${M.short.n} chặng${M.short.rate == null ? " (cần ≥2)" : ""}</span></div>
+      <div class="stat"><span class="l">Mức chung</span><span class="v">${fmt(M.RAll, 2)}%/km</span><span class="small muted">${fmt(M.sumU, 0)}% / ${fmt(M.sumK)} km</span></div>
       <div class="stat"><span class="l">Số lần đo có km</span><span class="v">${M.pts.length}</span><span class="small muted">${M.pts.length < 6 ? "còn ít, dự báo chưa chắc" : "đã khá đủ"}</span></div>
       <div class="stat"><span class="l">Thấp nhất</span><span class="v">${fmt(M.min, 2)}</span><span class="small muted">%/km · thuận lợi</span></div>
       <div class="stat"><span class="l">Cao nhất</span><span class="v">${fmt(M.max, 2)}</span><span class="small muted">%/km · bất lợi</span></div>
@@ -266,7 +357,8 @@ function renderSettings() {
   <div class="card"><h2>Cách dự báo</h2><ul class="clean small">
     <li>Chặng đã từng đi (cùng điểm đi, điểm đến): lấy số pin thực tế lần trước.</li>
     <li>Chặng mới: km × mức %/km từ các lần đo. Có cầu hoặc đường đông thì dùng mức của các chặng tương tự khi đã có ít nhất 2 chặng như vậy.</li>
-    <li>Thuận lợi dùng mức thấp nhất đã đo; bất lợi dùng mức cao nhất (+10% nếu có cầu/đông).</li>
+    <li>Chặng ngắn dưới ${SHORT_KM} km (hay dừng đèn, tăng tốc lại) dùng mức riêng của các chặng ngắn đã đi.</li>
+    <li>Thuận lợi dùng mức thấp nhất đã đo của chặng dài; bất lợi dùng mức cao nhất (+10% nếu có cầu/đông).</li>
     <li>Pin tính nối tiếp: pin đầu chặng sau = pin cuối chặng trước.</li>
   </ul></div>
   <div class="card"><h2>Sao lưu</h2>
@@ -392,9 +484,34 @@ document.addEventListener("click", (e) => {
       const pick = (s) => ({ name: s.name, addr: s.addr, lat: s.lat, lon: s.lon, label: s.label });
       ui.logDraft = { ...newDraft(), date: p.date || today(), order: i + 1, from: pick(r.a), to: pick(r.b), route: r.pl.route,
         km: r.pl.km, kmSource: r.pl.kmSource, traffic: r.pl.traffic, bridge: r.pl.bridge, pinStart: prev ?? "", predicted: r.f.ok ? r0(r.f.norm) : "" };
-      renderLog(); setView("log"); break;
+      ui.logMode = "single"; renderLog(); setView("log"); break;
     }
     case "draft-reset": ui.logDraft = newDraft(); renderLog(); break;
+    case "mode-journey": ui.logMode = "journey"; renderLog(); break;
+    case "mode-single": ui.logMode = "single"; renderLog(); break;
+    case "j-add": ui.journey.stops.push(blankJStop()); renderLog(); break;
+    case "j-del": ui.journey.stops.splice(i, 1); renderLog(); break;
+    case "j-route": doJourneyRoute(i); break;
+    case "j-reset": ui.journey = newJourney(); renderLog(); break;
+    case "j-from-plan": {
+      // Lấy các điểm của lịch trình hiện tại; pin để trống cho bạn điền.
+      ui.journey = { ...newJourney(), date: p.date || today(), stops: p.stops.map((s, k) => {
+        const pl = k > 0 ? p.legs[k - 1] : null;
+        return { ...blankJStop(), name: s.name, addr: s.addr, lat: s.lat, lon: s.lon, label: s.label,
+          pin: k === 0 && p.startPin !== "" ? p.startPin : "", leave: s.time || "",
+          ...(pl ? { km: pl.km, kmSource: pl.kmSource, traffic: pl.traffic, bridge: pl.bridge } : {}) };
+      }) };
+      renderLog(); toast("Đã lấy điểm từ lịch trình. Điền pin khi tới từng điểm."); break;
+    }
+    case "j-save": {
+      let legs;
+      try { legs = journeyToLegs(ui.journey); } catch (err) { toast(err.message); break; }
+      const stamp = Date.now().toString(36);
+      legs.forEach((l, k) => state.legs.push({ ...l, id: `leg-${stamp}-${k}`, createdAt: new Date().toISOString() }));
+      ui.journey = newJourney();
+      persist(); renderAll(); setView("history"); toast(`Đã lưu ${legs.length} chặng`);
+      break;
+    }
     case "edit": ui.editId = t.dataset.id; ui.confirmDel = null; renderHistory(); break;
     case "edit-cancel": ui.editId = null; renderHistory(); break;
     case "del": ui.confirmDel = t.dataset.id; renderHistory(); break;
@@ -417,6 +534,13 @@ document.addEventListener("change", (e) => {
     persist(); renderPlan(); return;
   }
   if (t.dataset.leg != null) { p.legs[Number(t.dataset.leg)][t.dataset.f] = t.type === "checkbox" ? t.checked : t.value; persist(); renderPlan(); return; }
+  if (t.dataset.js != null) {
+    const s = ui.journey.stops[Number(t.dataset.js)], f = t.dataset.f;
+    s[f] = t.type === "checkbox" ? t.checked : t.value;
+    if (f === "addr" || (f === "name" && !s.addr)) Object.assign(s, { lat: null, lon: null, label: "" });
+    renderLog(); return;
+  }
+  if (t.dataset.j) { ui.journey[t.dataset.j] = t.value; return; }
   if (t.form?.id === "logForm") {
     const d = ui.logDraft, v = t.type === "checkbox" ? t.checked : t.value;
     if (t.name.includes(".")) { const [o, k] = t.name.split("."); d[o][k] = v; if (k === "addr") Object.assign(d[o], { lat: null, lon: null }); }
