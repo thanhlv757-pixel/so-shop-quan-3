@@ -32,7 +32,10 @@
 
 <main>
   <section id="view-plan" class="view">
-    <div id="map" class="map" role="img" aria-label="Bản đồ lịch trình"></div>
+    <div id="mapWrap" class="mapwrap" hidden>
+      <div id="map" class="map" role="img" aria-label="Bản đồ lịch trình"></div>
+      <p id="mapNote" class="hint warn" hidden>Không tải được nền bản đồ (mạng hoặc iPhone đang chặn). Tìm địa điểm và tra km vẫn dùng bình thường.</p>
+    </div>
     <div id="planBody"></div>
   </section>
   <section id="view-log" class="view" hidden></section>

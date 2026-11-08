@@ -53,10 +53,19 @@ main{padding:12px max(12px,env(safe-area-inset-right,0px)) 0 max(12px,env(safe-a
 label{display:flex;flex-direction:column;gap:4px;font-size:.8rem;color:var(--muted);min-width:0}
 input,select,textarea{font:inherit;font-size:16px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:9px;
   padding:10px 11px;width:100%;min-width:0;min-height:44px}
+input:not([type=checkbox]),select{height:44px}
 input[type=checkbox]{width:22px;height:22px;min-height:0;accent-color:var(--accent)}
+/* Safari iOS: ô ngày/giờ tự rộng theo nội dung, cao hơn ô khác và canh giữa chữ → tràn, đè ô bên cạnh. */
+input[type=date],input[type=time]{-webkit-appearance:none;appearance:none;display:block;width:100%;min-width:0;max-width:100%;height:44px;line-height:1.2;text-align:left}
+input::-webkit-date-and-time-value{text-align:left;margin:0}
+input::-webkit-datetime-edit{padding:0}
+.row.nowrap{flex-wrap:nowrap}
+.row>label.grow{flex:1 1 0;min-width:0}
+.row>label.time{flex:0 0 124px;min-width:0}
+.mapwrap{display:flex;flex-direction:column;gap:8px}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .row{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end}
-.row>label{flex:1 1 130px}
+.row>label{flex:1 1 120px}
 .check{flex-direction:row;align-items:center;gap:8px;color:var(--ink);font-size:.92rem;min-height:44px}
 
 .btn{font:inherit;font-weight:600;font-size:.92rem;border-radius:10px;min-height:44px;padding:0 14px;border:1px solid var(--line);
@@ -143,3 +152,9 @@ ul.clean{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px}
 }
 .legname{font-size:.8rem;min-width:0;overflow-wrap:anywhere}
 @media (prefers-reduced-motion:no-preference){.batt>i{transition:width .3s}}
+
+/* Chữ gợi ý trong ô số: dùng font chữ thường để dấu tiếng Việt không vỡ */
+input.num::placeholder{font-family:var(--font);letter-spacing:0}
+/* Điểm trên bản đồ: chấm tròn màu chủ đạo, theo chế độ sáng/tối */
+.leaflet-marker-icon.pin-marker{display:grid;place-items:center;border-radius:50%;background:var(--accent);color:var(--accent-ink);
+  font:700 .85rem/1 var(--mono);border:2px solid var(--panel);box-shadow:0 1px 4px rgba(0,0,0,.35)}

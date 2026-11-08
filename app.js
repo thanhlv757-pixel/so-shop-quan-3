@@ -23,11 +23,31 @@ function persist() { saving = saving.then(() => save(state)).catch(() => {}); re
 function toast(t) { const el = $("#toast"); el.textContent = t; el.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => (el.hidden = true), 2600); }
 
 /* ---------- bản đồ ---------- */
-let map = null, mapLayer = null;
+let map = null, mapLayer = null, tileLayer = null;
+// Nguồn nền bản đồ, thử lần lượt: một nguồn bị chặn (mạng, iCloud Private Relay…) thì đổi nguồn khác.
+const OSM_ATTR = "© OpenStreetMap", CARTO_ATTR = "© OpenStreetMap © CARTO";
+const TILE_SOURCES = {
+  osm: { url: "https://tile.openstreetmap.org/{z}/{x}/{y}.png", attribution: OSM_ATTR, maxZoom: 19 },
+  cartoLight: { url: "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png", attribution: CARTO_ATTR, subdomains: "abcd", maxZoom: 19 },
+  cartoDark: { url: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png", attribution: CARTO_ATTR, subdomains: "abcd", maxZoom: 19 },
+};
+const darkQuery = window.matchMedia("(prefers-color-scheme: dark)");
+const tileOrder = () => (darkQuery.matches ? ["cartoDark", "osm"] : ["osm", "cartoLight"]);
+function useTiles(k = 0) {
+  if (tileLayer) map.removeLayer(tileLayer);
+  $("#mapNote").hidden = true;
+  const key = tileOrder()[k];
+  if (!key) { $("#mapNote").hidden = false; return; } // hết nguồn: báo rõ thay vì để ô trống
+  let loaded = false, errors = 0;
+  tileLayer = L.tileLayer(TILE_SOURCES[key].url, TILE_SOURCES[key]).addTo(map);
+  tileLayer.on("tileload", () => { loaded = true; });
+  tileLayer.on("tileerror", () => { if (!loaded && ++errors >= 3) useTiles(k + 1); });
+}
 function initMap() {
-  if (!window.L) { $("#map").innerHTML = '<p class="small muted" style="padding:12px">Không tải được bản đồ.</p>'; return; }
+  if (!window.L) { $("#mapNote").hidden = false; return; }
   map = L.map("map", { zoomControl: false, attributionControl: true }).setView([10.78, 106.69], 12);
-  L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: "© OpenStreetMap" }).addTo(map);
+  useTiles(0);
+  darkQuery.addEventListener?.("change", () => useTiles(0));
   mapLayer = L.layerGroup().addTo(map);
   map.on("click", (e) => {
     const i = ui.pickOnMap;
@@ -42,13 +62,11 @@ function drawMap() {
   if (!map) return;
   mapLayer.clearLayers();
   const pts = [];
-  const accent = getComputedStyle(document.documentElement).getPropertyValue("--accent").trim() || "#0f6b55";
   state.plan.stops.forEach((s, i) => {
     if (s.lat == null) return;
     pts.push([s.lat, s.lon]);
-    L.circleMarker([s.lat, s.lon], { radius: 9, color: accent, fillColor: accent, fillOpacity: 1, weight: 2 })
-      .bindTooltip(i === 0 ? "A" : String(i), { permanent: true, direction: "center", className: "" })
-      .addTo(mapLayer);
+    const icon = L.divIcon({ className: "pin-marker", html: i === 0 ? "A" : String(i), iconSize: [30, 30], iconAnchor: [15, 15] });
+    L.marker([s.lat, s.lon], { icon, keyboard: false, interactive: false }).addTo(mapLayer);
   });
   state.plan.legs.forEach((pl, i) => {
     const alts = ui.routes[i];
@@ -57,6 +75,11 @@ function drawMap() {
     if (sel?.geometry) L.geoJSON(sel.geometry, { style: { color: "#2b7de9", weight: 5, opacity: 0.85 } }).addTo(mapLayer);
   });
   $("#map").classList.toggle("picking", ui.pickOnMap != null);
+  // Chưa có điểm nào định vị thì ẩn bản đồ cho gọn; vẫn hiện khi đang chạm chọn vị trí.
+  const show = pts.length > 0 || ui.pickOnMap != null;
+  $("#mapWrap").hidden = !show;
+  if (!show) return;
+  map.invalidateSize(); // vừa hiện lại sau khi ẩn: đo lại kích thước trước khi canh khung
   if (ui.pickOnMap == null) {
     if (pts.length === 1) map.setView(pts[0], 14);
     else if (pts.length > 1) map.fitBounds(pts, { padding: [28, 28] });
@@ -74,13 +97,13 @@ function battBar(v) {
 function stopHTML(s, i) {
   const res = ui.results[i];
   return `<div class="stop"><div class="dot">${i === 0 ? "A" : i}</div><div class="stopf">
-    <div class="row">
-      <label>${i === 0 ? "Điểm xuất phát" : "Điểm dừng " + i}<input id="s-name-${i}" data-stop="${i}" data-f="name" value="${esc(s.name)}" placeholder="Tên (vd: Nhà, sân Green)"></label>
-      <label style="flex:0 1 104px">${i === 0 ? "Giờ đi" : "Giờ rời"}<input id="s-time-${i}" data-stop="${i}" data-f="time" type="time" value="${esc(s.time)}"></label>
-    </div>
-    <div class="row">
-      <label style="flex:1 1 200px">Địa chỉ hoặc tên địa điểm<input id="s-addr-${i}" data-stop="${i}" data-f="addr" value="${esc(s.addr)}" placeholder="vd: Co.opmart Huỳnh Tấn Phát" enterkeyhint="search"></label>
+    <div class="row nowrap">
+      <label class="grow">${i === 0 ? "Điểm xuất phát" : "Điểm dừng " + i}<input id="s-addr-${i}" data-stop="${i}" data-f="addr" value="${esc(s.addr)}" placeholder="Địa chỉ hoặc tên chỗ, vd: Crescent Mall" enterkeyhint="search" autocomplete="off"></label>
       <button class="btn sm" data-act="search" data-i="${i}" type="button"${ui.searching[i] ? " disabled" : ""}>${ui.searching[i] ? "Đang tìm…" : "Tìm"}</button>
+    </div>
+    <div class="row nowrap">
+      <label class="grow">Tên gọi<input id="s-name-${i}" data-stop="${i}" data-f="name" value="${esc(s.name)}" placeholder="tuỳ chọn, vd: Nhà"></label>
+      <label class="time">${i === 0 ? "Giờ đi" : "Giờ rời"}<input id="s-time-${i}" data-stop="${i}" data-f="time" type="time" value="${esc(s.time)}"></label>
     </div>
     <div class="actions">
       <button class="btn sm" data-act="map-pick" data-i="${i}" type="button"${ui.pickOnMap === i ? ' aria-pressed="true"' : ""}>${ui.pickOnMap === i ? "Đang chờ chạm bản đồ… (bấm để huỷ)" : "Chạm chọn trên bản đồ"}</button>
@@ -96,13 +119,15 @@ function stopHTML(s, i) {
 function legHTML(pl, i, r) {
   const a = state.plan.stops[i], b = state.plan.stops[i + 1];
   const gm = googleMapsLink(a, b), alts = ui.routes[i];
-  const canRoute = a.addr || a.lat != null ? (b.addr || b.lat != null) : false;
+  const has = (s) => !!(s.addr || s.name || s.lat != null);
+  const canRoute = has(a) && has(b);
   return `<div class="leg">
     <div class="row" style="justify-content:space-between;align-items:center"><h3>Chặng ${i + 1}</h3>
       <div class="actions">
         <button class="btn sm primary" data-act="route" data-i="${i}" type="button"${!canRoute || ui.routing[i] ? " disabled" : ""}>${ui.routing[i] ? "Đang tra…" : "Tra km"}</button>
         ${gm ? `<a class="btn sm" href="${esc(gm)}" target="_blank" rel="noopener">Google Maps ↗</a>` : ""}
       </div></div>
+    ${!canRoute ? `<p class="small muted">Nhập ${has(a) ? "điểm đến" : "điểm đi"} để tra km.</p>` : ""}
     ${alts ? `<div class="alts" role="group" aria-label="Chọn tuyến">${alts.map((t, k) => `<button type="button" class="alt" data-act="alt" data-i="${i}" data-k="${k}" aria-pressed="${(pl.altIndex ?? 0) === k}">${k === 0 ? "Tuyến chính" : "Tuyến " + (k + 1)}: ${fmt(t.km)} km · ${t.min}′</button>`).join("")}</div>` : ""}
     <div class="row">
       <label>Km<input id="l-km-${i}" class="num" data-leg="${i}" data-f="km" type="number" inputmode="decimal" step="0.1" min="0" value="${esc(pl.km)}"></label>
@@ -225,8 +250,8 @@ function journeyHTML() {
       </div>
       <div class="row">
         <label>${i === 0 ? "Pin lúc đi (%)" : "Pin khi tới (%)"}<input id="j-pin-${i}" class="num" data-js="${i}" data-f="pin" type="number" inputmode="numeric" min="0" max="100" value="${esc(s.pin)}" placeholder="${i === 0 || i === n - 1 ? "bắt buộc" : "quên thì để trống"}"></label>
-        ${i > 0 ? `<label style="flex:0 1 104px">Giờ tới<input id="j-arr-${i}" data-js="${i}" data-f="arrive" type="time" value="${esc(s.arrive)}"></label>` : ""}
-        ${i < n - 1 ? `<label style="flex:0 1 104px">Giờ rời<input id="j-lv-${i}" data-js="${i}" data-f="leave" type="time" value="${esc(s.leave)}"></label>` : ""}
+        ${i > 0 ? `<label class="time">Giờ tới<input id="j-arr-${i}" data-js="${i}" data-f="arrive" type="time" value="${esc(s.arrive)}"></label>` : ""}
+        ${i < n - 1 ? `<label class="time">Giờ rời<input id="j-lv-${i}" data-js="${i}" data-f="leave" type="time" value="${esc(s.leave)}"></label>` : ""}
       </div>
       ${s.lat != null ? `<p class="resolved"><b>✓</b> ${esc(s.label)}</p>` : ""}
       ${n > 2 ? `<div><button class="btn sm danger" type="button" data-act="j-del" data-i="${i}">Xoá điểm này</button></div>` : ""}
