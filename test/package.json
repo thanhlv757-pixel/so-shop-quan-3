@@ -1,0 +1,15 @@
+{
+  "name": "so-shop-q3-tests",
+  "private": true,
+  "scripts": {
+    "builder": "node extract-builder.js",
+    "excel": "node extract-builder.js && node run.js",
+    "ui": "node ui.js",
+    "login": "node login.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "2.45.4",
+    "exceljs": "4.4.0",
+    "playwright": "1.49.1"
+  }
+}
