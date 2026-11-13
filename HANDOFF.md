@@ -18,7 +18,7 @@ Tóm tắt toàn bộ phiên làm việc ngày 12–13/11/2026, để Claude Cod
 - **Frontend:** một file `index.html`, vanilla JS, không build. Thư viện qua CDN (ghim phiên bản):
   - `@supabase/supabase-js@2.45.4` (UMD, tải khi mở trang)
   - `exceljs@4.4.0` (chỉ tải khi bấm Xuất Excel)
-- **Hosting:** Netlify Drop, site `so-shop-quan-3`. Cập nhật = kéo thả lại thư mục chứa `index.html` vào trang Deploys của site trên Netlify (không có CI).
+- **Hosting:** Netlify, site `so-shop-quan-3`, từ 13/11/2026 nối với repo GitHub `thanhlv757-pixel/so-shop-quan-3` (nhánh `main`, không build command, publish directory `.`). Cập nhật = chép file đã sửa sang bản clone `Documents\GitHub\so-shop-quan-3`, commit, rồi người dùng bấm **Push origin** trong GitHub Desktop (máy không có git riêng; git đi kèm GitHub Desktop commit được nhưng không push được). Không chép `migration/` vào repo.
 - **Backend:** Supabase project `so-shop-q3`, ref `jlwayvnokaxiapfaozew`, region ap-southeast-1 (Singapore), gói Free (tự tạm dừng nếu 7 ngày không dùng → vào dashboard bấm Restore).
   - URL: `https://jlwayvnokaxiapfaozew.supabase.co`
   - Khóa publishable (công khai, đã nằm trong index.html): `sb_publishable_JmUVQ8pw4H-9Fh_R78gN7A_O9Dj3O3P`
