@@ -971,7 +971,7 @@ function depositForm(x) {
   editing = x || null;
   const t = today(), v = x || { date: t, status: 'Đang chờ', quantity: 1, category: 'Vợt', contact_platform: 'Zalo' };
   openDialog('sheet', sheetShell(x ? 'Sửa khách đặt cọc' : 'Thêm khách đặt cọc', 'Tiền cọc theo dõi riêng, không trừ vào quỹ chi.', `
-    ${x ? '' : `<div class="field"><span>Điền nhanh từ ảnh tin nhắn</span><label class="picker">${ic('image')}<span>Chọn ảnh</span><input type="file" accept="image/jpeg,image/png,image/webp" multiple data-act="dep-ocr"></label><small id="ocr-msg" role="status">Tối đa 3 ảnh tin nhắn hoặc chuyển khoản. Ảnh gửi tới Google Gemini để đọc, không lưu vào sổ.</small></div>`}
+    ${x ? '' : `<div class="field"><span>Điền nhanh từ ảnh tin nhắn</span><label class="picker">${ic('image')}<span>Chọn ảnh</span><input type="file" accept="image/jpeg,image/png,image/webp" multiple data-act="dep-ocr"></label><small id="ocr-msg" role="status">Chọn hoặc dán (Ctrl+V) tối đa 3 ảnh tin nhắn, chuyển khoản. Ảnh gửi tới Google Gemini để đọc, không lưu vào sổ.</small></div>`}
     ${field('Tên khách hàng', `<input name="customer" maxlength="100" value="${esc(v.customer)}" required>`, { req: 1, name: 'customer' })}
     <div class="two">${field('Số điện thoại', `<input name="phone" type="tel" inputmode="tel" maxlength="20" value="${esc(v.phone)}">`, { name: 'phone' })}
     ${field('Nền tảng liên hệ', `<select name="contact_platform">${PLATFORMS.map(p => `<option${p === v.contact_platform ? ' selected' : ''}>${p}</option>`).join('')}</select>`, { name: 'contact_platform' })}</div>
@@ -988,9 +988,9 @@ function depositForm(x) {
     x ? 'Lưu thay đổi' : 'Thêm khách cọc'));
 }
 const OCR_LABELS = { customer: 'tên khách', phone: 'số điện thoại', category: 'loại sản phẩm', product: 'sản phẩm', variant: 'size', date: 'ngày cọc', amount: 'tiền cọc', note: 'ghi chú' };
-async function fillDepositFromImages(input) {
-  const form = input.form, msg = form.querySelector('#ocr-msg'), files = [...input.files].slice(0, 3);
-  if (!files.length) return;
+async function fillDepositFromImages(input, picked) {
+  const form = input.form, msg = form.querySelector('#ocr-msg'), files = picked.slice(0, 3);
+  if (!files.length || input.disabled) return;
   input.disabled = true; msg.textContent = 'Đang đọc ảnh…';
   try {
     const t = today();
@@ -1176,7 +1176,7 @@ document.addEventListener('change', ev => {
   const t = ev.target;
   if (t.id === 'month-input' && t.value) { const m = t.value > today().slice(0, 7) ? today().slice(0, 7) : t.value; S.month = m; loadMonth(m); }
   if (t.dataset.act === 'photo-add') addPhotos([...t.files]);
-  if (t.dataset.act === 'dep-ocr') fillDepositFromImages(t);
+  if (t.dataset.act === 'dep-ocr') fillDepositFromImages(t, [...t.files]);
   if (t.dataset.act === 'dep-status') { const c = t.form.elements.closed_date; c.disabled = t.value === 'Đang chờ'; if (!c.disabled && !c.value) c.value = today(); }
   if (t.matches('.cell-input')) { clearTimeout(strTimers[t.dataset.str + t.dataset.emp]); saveStringCell(t); }
 });
@@ -1192,9 +1192,12 @@ document.addEventListener('focusout', ev => {
   msg ? t.setAttribute('aria-invalid', 'true') : t.removeAttribute('aria-invalid');
 });
 document.addEventListener('paste', ev => {
-  if (!$('#sheet').open || !$('#photos')) return;
+  const ocr = $('[data-act="dep-ocr"]');
+  if (!$('#sheet').open || (!$('#photos') && !ocr)) return;
   const files = [...(ev.clipboardData?.items || [])].filter(i => i.kind === 'file' && i.type.startsWith('image/')).map(i => i.getAsFile()).filter(Boolean);
-  if (files.length) { ev.preventDefault(); addPhotos(files); }
+  if (!files.length) return;
+  ev.preventDefault();
+  ocr ? fillDepositFromImages(ocr, files) : addPhotos(files);
 });
 document.addEventListener('submit', async ev => {
   const form = ev.target; ev.preventDefault();
