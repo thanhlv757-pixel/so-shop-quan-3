@@ -12,7 +12,7 @@
 :root{
   --bg:#f6f8f7;--surface:#fff;--subtle:#f2f5f3;--line:#e1e7e3;--line-strong:#cdd6d1;
   --ink:#16261e;--text:#2f3f37;--muted:#5a6a62;--accent:#1f6b4a;--accent-hover:#175a3d;--accent-soft:#e7f1ec;
-  --danger:#b42318;--danger-soft:#fdeceb;--warn:#8a5300;--warn-soft:#fff4e0;--ok:#1f6b4a;
+  --on-accent:#fff;--danger:#b42318;--danger-soft:#fdeceb;--warn:#8a5300;--warn-soft:#fff4e0;--ok:#1f6b4a;
   --r:8px;--shadow:0 1px 2px rgba(16,32,24,.06);--side:232px;
   --s1:4px;--s2:8px;--s3:12px;--s4:16px;--s5:24px;--s6:32px;
   font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
@@ -47,7 +47,7 @@ svg.i{width:18px;height:18px;flex-shrink:0;stroke:currentColor;fill:none;stroke-
 .tile form{display:flex;gap:6px;margin:6px 0 2px}
 .tile form input{flex:1;min-width:0;height:36px;border:1px solid var(--line-strong);border-radius:var(--r);padding:0 8px;font-variant-numeric:tabular-nums}
 .link{border:0;background:none;padding:0;color:var(--accent);font-weight:500;text-decoration:underline;text-underline-offset:2px}
-@media (pointer:coarse){.btn,.icon-btn{min-height:44px}.icon-btn,.icon-btn.sm{width:44px;height:44px}.cell-input{height:44px}.thumbs button{width:44px;height:44px}}
+@media (pointer:coarse){.btn,.icon-btn{min-height:44px}.icon-btn,.icon-btn.sm{width:44px;height:44px}.thumbs button{width:44px;height:44px}}
 
 /* Shell */
 .shell{min-height:100vh}
@@ -105,7 +105,6 @@ table{width:100%;border-collapse:collapse}
 th{font-size:12px;font-weight:600;color:var(--muted);text-align:left;padding:10px var(--s4);background:var(--subtle);border-bottom:1px solid var(--line);white-space:nowrap}
 td{padding:11px var(--s4);border-bottom:1px solid var(--line);vertical-align:top}
 tbody tr:hover{background:#fafbfa}
-table.mid td{vertical-align:middle;padding-top:6px;padding-bottom:6px}
 tbody tr:last-child td{border-bottom:0}
 tfoot td{font-weight:600;color:var(--ink);background:var(--subtle);border-top:1px solid var(--line);border-bottom:0}
 td .t{color:var(--ink);font-weight:500}
@@ -125,10 +124,6 @@ td.act{width:1%;padding-top:6px;padding-left:4px;padding-right:8px}
 .empty{padding:40px var(--s4);text-align:center;color:var(--muted)}
 .empty b{display:block;color:var(--ink);margin-bottom:4px}
 .empty .btn{margin-top:var(--s3)}
-.cell-input{width:64px;height:34px;border:1px solid var(--line-strong);border-radius:6px;text-align:right;padding:0 8px;font-variant-numeric:tabular-nums;background:var(--surface)}
-.cell-input:disabled{background:var(--subtle);color:var(--muted)}
-.cell-input.saving{border-color:var(--accent)}
-tr.today td{background:var(--accent-soft)}
 .skel{height:14px;border-radius:4px;background:#e9eeeb;animation:sk 1.2s ease-in-out infinite alternate}
 @keyframes sk{from{opacity:1}to{opacity:.45}}
 .banner{display:flex;gap:var(--s2);align-items:flex-start;padding:var(--s3) var(--s4);border-radius:var(--r);border:1px solid #f3c7c2;background:var(--danger-soft);color:var(--danger);margin-bottom:var(--s4)}
@@ -182,6 +177,51 @@ dialog.gallery{background:#111;width:100vw;height:100dvh;max-width:100vw;max-hei
 .inline-form{display:flex;gap:var(--s2);margin-top:var(--s3);flex-wrap:wrap}
 .inline-form input{flex:1;min-width:160px;height:36px;border:1px solid var(--line-strong);border-radius:var(--r);padding:0 10px}
 
+/* Đan vợt */
+.sv{max-width:560px}
+.sv-sum{padding:var(--s4)}
+.sv-sum-top{display:flex;justify-content:space-between;align-items:baseline;gap:var(--s2);margin-bottom:var(--s2)}
+.sv-sum-top b{font-size:22px;color:var(--ink)}
+.sv-hint{font-size:14px;color:var(--muted);margin-top:var(--s2)}
+.sv-hint.ok{color:var(--ok);font-weight:600}
+.sv-mode{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin:var(--s4) 0;padding:4px;background:var(--subtle);border:1px solid var(--line);border-radius:12px}
+.sv-mode button{min-height:44px;border:0;border-radius:9px;background:transparent;color:var(--muted);font-weight:500}
+.sv-mode button[aria-pressed=true]{background:var(--surface);color:var(--ink);font-weight:600;box-shadow:var(--shadow)}
+.sv-daynav{display:flex;align-items:center;gap:var(--s2);margin-bottom:var(--s3)}
+.sv-nav{width:48px;height:48px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--ink);display:grid;place-items:center;flex-shrink:0}
+.sv-nav:disabled{opacity:.35;cursor:not-allowed}
+.sv-day{flex:1;text-align:center}
+.sv-day b{display:block;font-size:24px;line-height:1.2;color:var(--ink)}
+.sv-day span{font-size:14px;color:var(--muted)}
+.sv-list{padding:0 var(--s4)}
+.sv-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
+.sv-row:last-child{border-bottom:0}
+.sv-n{flex:1;min-width:0}
+.sv-n b{display:block;font-size:17px;color:var(--ink)}
+.sv-n span{font-size:14px;color:var(--muted)}
+.sv-row.sun .sv-n b{color:var(--danger)}
+.sv-step{width:48px;height:48px;border-radius:12px;border:1px solid var(--line-strong);background:var(--subtle);color:var(--ink);font-size:24px;line-height:1;display:grid;place-items:center;flex-shrink:0;touch-action:manipulation}
+.sv-step.plus{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.sv-in{width:60px;height:48px;border:1px solid var(--line-strong);border-radius:12px;text-align:center;font-size:22px;font-weight:600;background:var(--surface);color:var(--ink);font-variant-numeric:tabular-nums}
+.sv-in[aria-invalid=true]{border-color:var(--danger)}
+.sv-tot{display:flex;justify-content:space-between;padding:12px 0;border-top:1px solid var(--line);color:var(--muted)}
+.sv-tot b{color:var(--ink)}
+.sv-done{width:100%;min-height:48px;margin-top:var(--s3)}
+.sv-h{margin:var(--s5) 0 4px}
+.sv-p{font-size:14px;margin:var(--s2) 0}
+.sv-strip{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;margin-top:var(--s2)}
+.sv-strip button{min-height:48px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:4px 0;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.15}
+.sv-strip small{font-size:13px;color:var(--muted)}
+.sv-strip button.has{background:var(--accent-soft);border-color:transparent}
+.sv-strip button.cur{outline:2px solid var(--accent);outline-offset:1px}
+.sv-strip button:disabled{opacity:.35;cursor:not-allowed}
+.sv-who{display:grid;grid-template-columns:repeat(auto-fit,minmax(90px,1fr));gap:var(--s2)}
+.sv-who button{min-height:56px;border:1px solid var(--line);border-radius:12px;background:var(--surface);color:var(--ink);display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.2}
+.sv-who small{font-size:13px;color:var(--muted)}
+.sv-who button[aria-pressed=true]{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.sv-who button[aria-pressed=true] small{color:var(--on-accent)}
+.sv-pay{padding:0 var(--s4)}
+
 /* Auth */
 .auth{min-height:100vh;display:grid;grid-template-columns:minmax(0,1fr);place-items:center;padding:var(--s4)}
 .auth .card{width:380px;max-width:100%;padding:var(--s6) var(--s5)}
@@ -226,9 +266,6 @@ dialog.gallery{background:#111;width:100vw;height:100dvh;max-width:100vw;max-hei
   table.stack tfoot tr{padding:0}
   table.stack tfoot td{padding:12px var(--s4)}
   .dh,.db,.df{padding-left:var(--s4);padding-right:var(--s4)}
-  table.mid th,table.mid td{padding-left:6px;padding-right:6px}
-  table.mid th:first-child,table.mid td:first-child{padding-left:var(--s3)}
-  .cell-input{width:50px;padding:0 6px}
   .gal-body img{max-width:calc(100% - 80px)}
 }
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
@@ -562,7 +599,8 @@ const S = {
   settings: store.get('soshop:settings') || { employees: [], kpi_target: 450, rate_low: 5000, rate_high: 10000 },
   budget: 0, expenses: [], strings: [], deposits: [], members: [],
   loaded: false, syncing: false, error: '', urls: {},
-  f: { expQ: '', expCat: 'all', depQ: '', depStatus: 'all' }, withImages: true, exporting: false
+  f: { expQ: '', expCat: 'all', depQ: '', depStatus: 'all' }, withImages: true, exporting: false,
+  sv: { mode: 'day', day: null, who: null }
 };
 let loadSeq = 0;
 
@@ -578,6 +616,7 @@ const must = ({ data, error }) => { if (error) throw error; return data; };
 
 /* ---------- data ---------- */
 async function loadMonth(month, { silent } = {}) {
+  flushCounts();
   const seq = ++loadSeq;
   const cacheKey = 'soshop:m:' + month;
   const cached = store.get(cacheKey);
@@ -738,22 +777,41 @@ const VIEW_FN = {
   },
 
   strings() {
-    const st = stats(), emps = S.settings.employees, t = today();
-    const days = Array.from({ length: daysIn(S.month) }, (_, i) => `${S.month}-${String(i + 1).padStart(2, '0')}`);
-    const by = Object.fromEntries(S.strings.map(s => [String(s.date).slice(0, 10), s.counts || {}]));
-    const dow = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
-    return `${head('Đan vợt', `${monthLabel(S.month)} · ${nf.format(st.racks)}/${nf.format(S.settings.kpi_target)} cây · đơn giá ${money(st.rate)}/cây · tiền công ${money(st.pay)}`)}
-    <section class="card" aria-label="Bảng đan vợt theo ngày">
-      ${emps.length ? `<div class="toolbar"><span class="muted" style="font-size:13px">Nhập số vợt, dữ liệu tự lưu khi rời ô.</span><span class="count">${nf.format(st.racks)} cây · ${st.achieved ? 'Đạt KPI' : `còn ${nf.format(S.settings.kpi_target - st.racks)} cây tới KPI`}</span></div>
-      <div class="tw"><table class="mid"><thead><tr><th>Ngày</th>${emps.map(n => `<th class="num">${esc(n)}</th>`).join('')}<th class="num">Tổng</th></tr></thead><tbody>
-      ${days.map(d => { const c = by[d] || {}, future = d > t, tot = sum(emps, n => Number(c[n]) || 0), wd = new Date(d + 'T00:00:00').getDay();
-        return `<tr${d === t ? ' class="today"' : ''}><td style="white-space:nowrap"><span class="${wd === 0 ? '' : 'muted'}" style="display:inline-block;width:26px;font-size:12px;${wd === 0 ? 'color:var(--danger)' : ''}">${dow[wd]}</span>${dmy(d).slice(0, 5)}</td>
-        ${emps.map(n => `<td class="num"><input class="cell-input" type="number" inputmode="numeric" min="0" max="200" step="1" value="${c[n] ? Number(c[n]) : ''}" placeholder="0" data-str="${d}" data-emp="${esc(n)}" aria-label="${esc(n)} ngày ${dmy(d)}"${future ? ' disabled' : ''}></td>`).join('')}
-        <td class="num"><b style="color:var(--ink)">${tot || ''}</b></td></tr>`; }).join('')}
-      </tbody><tfoot><tr><td>Tổng</td>${st.per.map(p => `<td class="num">${nf.format(p.count)}</td>`).join('')}<td class="num">${nf.format(st.racks)}</td></tr>
-      <tr><td>Tiền công</td>${st.per.map(p => `<td class="num">${money(p.pay)}</td>`).join('')}<td class="num">${money(st.pay)}</td></tr></tfoot></table></div>`
-      : `<div class="empty"><b>Chưa có nhân viên</b>Thêm nhân viên để bắt đầu ghi số vợt.<br><button class="btn primary" data-act="go" data-view="settings">Mở Cài đặt</button></div>`}
-    </section>`;
+    const emps = S.settings.employees;
+    if (!emps.length) return `${head('Đan vợt', monthLabel(S.month))}<section class="card"><div class="empty"><b>Chưa có nhân viên</b>Thêm nhân viên để bắt đầu ghi số vợt.<br><button class="btn primary" data-act="go" data-view="settings">Mở Cài đặt</button></div></section>`;
+    const day = svDay(), who = svWho(), dates = svDates(), last = dates[dates.length - 1], dayMode = S.sv.mode !== 'emp';
+    const wd = d => new Date(d + 'T00:00:00').getDay(), dm = d => dmy(d).slice(0, 5);
+    const row = (id, d, n, label, sub, sun) => `<div class="sv-row${sun ? ' sun' : ''}"><div class="sv-n"><b>${label}</b><span>${sub}</span></div>
+      <button class="sv-step" data-act="sv-step" data-sv-step="-1" data-sv-date="${d}" data-emp="${esc(n)}" aria-label="Bớt 1 cây của ${esc(n)} ngày ${dm(d)}">−</button>
+      <input class="sv-in" id="${id}" type="text" inputmode="numeric" pattern="[0-9]*" enterkeyhint="next" autocomplete="off" maxlength="3" data-sv-date="${d}" data-emp="${esc(n)}" value="${countOf(d, n) || ''}" placeholder="0" aria-label="Số vợt ${esc(n)} ngày ${dm(d)}">
+      <button class="sv-step plus" data-act="sv-step" data-sv-step="1" data-sv-date="${d}" data-emp="${esc(n)}" aria-label="Thêm 1 cây cho ${esc(n)} ngày ${dm(d)}">+</button></div>`;
+    return `${head('Đan vợt', `${monthLabel(S.month)} · nhập số vợt theo ngày hoặc theo từng người`)}
+    <div class="sv">
+      <section class="card sv-sum" id="sv-sum" aria-label="Tổng tháng">${svSumHTML()}</section>
+      <div class="sv-mode" role="group" aria-label="Cách nhập">
+        <button id="sv-mode-day" data-act="sv-mode" data-mode="day" aria-pressed="${dayMode}">Theo ngày</button>
+        <button id="sv-mode-emp" data-act="sv-mode" data-mode="emp" aria-pressed="${!dayMode}">Theo từng người</button>
+      </div>
+      ${dayMode ? `
+      <div class="sv-daynav">
+        <button class="sv-nav" id="sv-prev" data-act="sv-go" data-k="-1" aria-label="Ngày trước"${day <= dates[0] ? ' disabled' : ''}>${ic('left')}</button>
+        <div class="sv-day" aria-live="polite"><b id="sv-day-label">${dm(day)}</b><span>${['Chủ nhật', 'Thứ hai', 'Thứ ba', 'Thứ tư', 'Thứ năm', 'Thứ sáu', 'Thứ bảy'][wd(day)]}</span></div>
+        <button class="sv-nav" id="sv-next" data-act="sv-go" data-k="1" aria-label="Ngày sau"${day >= last ? ' disabled' : ''}>${ic('right')}</button>
+      </div>
+      <section class="card sv-list" aria-label="Số vợt ngày ${dm(day)}">${emps.map((n, i) => row('sv-d-' + i, day, n, esc(n), '', false)).join('')}
+        <div class="sv-tot"><span>Tổng ngày này</span><b class="num" id="sv-day-total">${svDayTotal(day)} cây</b></div></section>
+      <button class="btn primary sv-done" data-act="sv-go" data-k="1" data-focus="1"${day >= last ? ' disabled' : ''}>${day >= last ? 'Đã tới ngày cuối có thể nhập' : 'Xong ngày này · sang ngày sau'}</button>
+      <h2 class="sv-h">Các ngày trong tháng</h2><p class="muted sv-p">Ô xanh là ngày đã có số. Chạm để mở ngày đó.</p>
+      <div class="sv-strip" id="sv-strip">${svStripHTML()}</div>`
+      : `
+      <div class="sv-who" id="sv-who" role="group" aria-label="Chọn người">${svWhoHTML()}</div>
+      <p class="muted sv-p">Đang nhập cho ${esc(who)}. Gõ số rồi bấm Enter để xuống ngày sau.</p>
+      <section class="card sv-list" aria-label="Số vợt của ${esc(who)}">${dates.map(d => row('sv-p-' + d, d, who, dm(d), ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'][wd(d)], wd(d) === 0)).join('')}</section>
+      ${emps.indexOf(who) < emps.length - 1 ? `<button class="btn primary sv-done" data-act="sv-who" data-name="${esc(emps[emps.indexOf(who) + 1])}">Xong ${esc(who)} · sang ${esc(emps[emps.indexOf(who) + 1])}</button>` : ''}`}
+      <h2 class="sv-h">Tiền công tạm tính</h2>
+      <section class="card sv-pay" id="sv-pay">${svPayHTML()}</section>
+      <p class="muted sv-p" id="sv-status" role="status" aria-live="polite"></p>
+    </div>`;
   },
 
   deposits() {
@@ -1053,28 +1111,70 @@ async function saveSettings(patch) {
   S.settings = next; store.set('soshop:settings', next); cacheNow(); render();
 }
 
-/* String cell autosave */
-const strTimers = {};
-async function saveStringCell(inp) {
-  const d = inp.dataset.str, emp = inp.dataset.emp, v = inp.value === '' ? 0 : Math.round(Number(inp.value));
-  if (!(v >= 0 && v <= 200)) { inp.setAttribute('aria-invalid', 'true'); toast('Số vợt phải từ 0 đến 200.'); return; }
-  inp.removeAttribute('aria-invalid');
-  let rec = S.strings.find(s => String(s.date).slice(0, 10) === d);
-  const prev = rec ? { ...rec.counts } : null;
-  if (Number(rec?.counts?.[emp] || 0) === v) return;
+/* ---------- Đan vợt: nhập theo ngày / theo người ---------- */
+const svDates = () => { const [a, end] = range(S.month), t = today(), last = t < end ? t : end, out = []; for (let d = a; d <= last; d = S.month + '-' + String(+d.slice(8) + 1).padStart(2, '0')) out.push(d); return out.length ? out : [a]; };
+const svDay = () => { const ds = svDates(), d = S.sv.day; return ds.includes(d) ? d : ds[ds.length - 1]; };
+const svWho = () => S.settings.employees.includes(S.sv.who) ? S.sv.who : S.settings.employees[0];
+const recOf = d => S.strings.find(s => String(s.date).slice(0, 10) === d);
+const countOf = (d, n) => Number(recOf(d)?.counts?.[n] || 0);
+const svDayTotal = d => sum(S.settings.employees, n => countOf(d, n));
+function svSumHTML() {
+  const st = stats(), k = S.settings.kpi_target;
+  return `<div class="sv-sum-top"><span>Vợt đã đan toàn shop</span><span class="num"><b id="sv-month-total">${nf.format(st.racks)}</b> / ${nf.format(k)} cây</span></div>
+    <div class="bar"><i style="width:${Math.min(100, st.racks / k * 100)}%"></i></div>
+    <p class="sv-hint${st.achieved ? ' ok' : ''}">${st.achieved ? `Đạt KPI · ${money(S.settings.rate_high)}/cây cho toàn bộ ${nf.format(st.racks)} cây` : `Còn ${nf.format(k - st.racks)} cây để lên ${money(S.settings.rate_high)}/cây`}</p>`;
+}
+function svPayHTML() { const st = stats(); return st.per.map(p => `<div class="kv"><span>${esc(p.name)} · ${nf.format(p.count)} cây</span><span class="num">${money(p.pay)}</span></div>`).join('') + `<div class="kv"><b>Tổng · ${money(st.rate)}/cây</b><b class="num">${money(st.pay)}</b></div>`; }
+function svWhoHTML() { const who = svWho(); return stats().per.map(p => `<button data-act="sv-who" data-sv-who="${esc(p.name)}" data-name="${esc(p.name)}" aria-pressed="${p.name === who}"><b>${esc(p.name)}</b><small class="num">${nf.format(p.count)} cây</small></button>`).join(''); }
+function svStripHTML() {
+  const [a] = range(S.month), ds = svDates(), cur = svDay(), dow = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
+  let h = '<span></span>'.repeat((new Date(a + 'T00:00:00').getDay() + 6) % 7);
+  for (let i = 1; i <= daysIn(S.month); i++) {
+    const d = S.month + '-' + String(i).padStart(2, '0'), t = svDayTotal(d), ok = ds.includes(d);
+    h += `<button data-act="sv-day" data-day="${d}" class="${t ? 'has' : ''}${d === cur ? ' cur' : ''}"${ok ? '' : ' disabled'} aria-label="Ngày ${i}${t ? ', ' + t + ' cây' : ', chưa có số'}"><small>${dow[new Date(d + 'T00:00:00').getDay()]}</small><b>${i}</b>${t ? `<small class="num">${t}</small>` : ''}</button>`;
+  }
+  return h;
+}
+// Update totals without re-rendering inputs (keeps the phone keyboard open while typing)
+function svRefresh() {
+  const set = (id, html) => { const el = document.getElementById(id); if (el) el.innerHTML = html; };
+  set('sv-sum', svSumHTML()); set('sv-pay', svPayHTML()); set('sv-strip', svStripHTML()); set('sv-who', svWhoHTML());
+  const t = document.getElementById('sv-day-total'); if (t) t.textContent = svDayTotal(svDay()) + ' cây';
+}
+
+// Batched save: edits to one date are upserted together 600 ms after the last change
+const svPending = {};
+function setCount(d, n, v) {
+  v = Math.max(0, Math.min(200, Math.round(Number(v) || 0)));
+  let rec = recOf(d);
+  if (!svPending[d]) svPending[d] = { prev: rec ? { ...rec.counts } : null };
   if (!rec) { rec = { date: d, counts: {} }; S.strings.push(rec); }
-  rec.counts = { ...rec.counts, [emp]: v };
-  inp.classList.add('saving');
+  rec.counts = { ...rec.counts, [n]: v };
+  clearTimeout(svPending[d].t);
+  svPending[d].t = setTimeout(() => saveDay(d), 600);
+  return v;
+}
+async function saveDay(d) {
+  const p = svPending[d]; if (!p) return;
+  clearTimeout(p.t); delete svPending[d];
+  const rec = recOf(d); if (!rec) return;
   try {
     must(await sb.from('strings').upsert({ date: d, counts: rec.counts, updated_at: new Date().toISOString() }));
     cacheNow();
-    const active = document.activeElement;
-    if (active?.dataset?.str) { const key = [active.dataset.str, active.dataset.emp]; render(); document.querySelector(`[data-str="${key[0]}"][data-emp="${CSS.escape(key[1])}"]`)?.focus(); }
-    else render();
+    const st = document.getElementById('sv-status'); if (st) st.textContent = `Đã lưu ngày ${dmy(d).slice(0, 5)}`;
   } catch (e) {
-    if (prev) rec.counts = prev; else S.strings = S.strings.filter(s => s !== rec);
-    inp.classList.remove('saving'); inp.setAttribute('aria-invalid', 'true'); toast(friendly(e));
+    if (p.prev) rec.counts = p.prev; else S.strings = S.strings.filter(s => s !== rec);
+    if (S.view === 'strings') render();
+    toast(friendly(e));
   }
+}
+const flushCounts = () => Object.keys(svPending).forEach(saveDay);
+document.addEventListener('visibilitychange', () => { if (document.hidden) flushCounts(); });
+window.addEventListener('pagehide', flushCounts);
+function svFocus(id) { const el = document.getElementById(id); if (el) { el.focus(); el.scrollIntoView({ block: 'center', behavior: 'smooth' }); } }
+function svShift(k, focus) {
+  const ds = svDates(), i = ds.indexOf(svDay()) + k; if (i < 0 || i >= ds.length) return false;
+  flushCounts(); S.sv.day = ds[i]; render(); if (focus) svFocus('sv-d-0'); return true;
 }
 
 /* Gallery */
@@ -1121,7 +1221,7 @@ async function exportExcel() {
 }
 
 /* ---------- events ---------- */
-function go(view) { if (!VIEWS[view]) view = 'overview'; S.view = view; $('#side')?.classList.remove('open'); $('#scrim')?.classList.remove('open'); render(); if (view === 'settings') loadMembers(); $('#main')?.focus({ preventScroll: true }); window.scrollTo(0, 0); }
+function go(view) { flushCounts(); if (!VIEWS[view]) view = 'overview'; S.view = view; $('#side')?.classList.remove('open'); $('#scrim')?.classList.remove('open'); render(); if (view === 'settings') loadMembers(); $('#main')?.focus({ preventScroll: true }); window.scrollTo(0, 0); }
 async function loadMembers() { try { S.members = must(await sb.from('members').select('email').order('email')); if (S.view === 'settings') render(); } catch {} }
 window.addEventListener('hashchange', () => go(location.hash.slice(1)));
 
@@ -1158,17 +1258,33 @@ document.addEventListener('click', async ev => {
     case 'clear-dep': S.f.depQ = ''; S.f.depStatus = 'all'; render(); break;
     case 'export': exportExcel(); break;
     case 'toggle-img': S.withImages = el.checked; break;
+    case 'sv-mode': flushCounts(); S.sv.mode = el.dataset.mode; render(); break;
+    case 'sv-who': flushCounts(); S.sv.who = el.dataset.name; render(); window.scrollTo(0, 0); break;
+    case 'sv-day': flushCounts(); S.sv.day = el.dataset.day; render(); window.scrollTo(0, 0); break;
+    case 'sv-go': svShift(+el.dataset.k, el.dataset.focus); break;
+    case 'sv-step': { const d = el.dataset.svDate, n = el.dataset.emp, v = setCount(d, n, countOf(d, n) + +el.dataset.svStep);
+      const inp = document.querySelector(`.sv-in[data-sv-date="${d}"][data-emp="${CSS.escape(n)}"]`); if (inp) { inp.value = v || ''; inp.removeAttribute('aria-invalid'); } svRefresh(); break; }
     case 'emp-del': { const n = el.dataset.name; confirmBox('Xóa nhân viên?', `Ẩn cột “${esc(n)}” khỏi bảng đan vợt. Số vợt đã ghi vẫn được giữ trong dữ liệu.`, 'Xóa nhân viên', async () => { await saveSettings({ employees: S.settings.employees.filter(x => x !== n) }); toast('Đã xóa nhân viên'); }); break; }
     case 'mem-del': { const m = el.dataset.email; confirmBox('Gỡ quyền dùng sổ?', `${esc(m)} sẽ không xem hoặc sửa được sổ nữa.`, 'Gỡ quyền', async () => { must(await sb.from('members').delete().eq('email', m)); await loadMembers(); toast('Đã gỡ quyền'); }); break; }
   }
 });
 document.addEventListener('keydown', ev => {
+  if (ev.key === 'Enter' && ev.target.matches?.('.sv-in')) {
+    ev.preventDefault();
+    const t = ev.target, emps = S.settings.employees;
+    if (S.sv.mode === 'emp') { const ds = svDates(), next = ds[ds.indexOf(t.dataset.svDate) + 1]; next ? svFocus('sv-p-' + next) : t.blur(); }
+    else { const i = emps.indexOf(t.dataset.emp); if (i < emps.length - 1) svFocus('sv-d-' + (i + 1)); else if (!svShift(1, true)) t.blur(); }
+  }
   if (ev.key === 'Escape' && $('#side')?.classList.contains('open')) { $('#side').classList.remove('open'); $('#scrim').classList.remove('open'); $('.top .menu')?.focus(); }
   if ($('#gallery').open && (ev.key === 'ArrowRight' || ev.key === 'ArrowLeft') && gal.list.length > 1) { gal.i = (gal.i + (ev.key === 'ArrowRight' ? 1 : -1) + gal.list.length) % gal.list.length; drawGallery(); }
-  if (ev.key === 'Enter' && ev.target.matches?.('.cell-input')) { ev.preventDefault(); const all = [...document.querySelectorAll('.cell-input:not(:disabled)')]; const i = all.indexOf(ev.target); const cols = S.settings.employees.length; (all[i + cols] || all[i + 1])?.focus(); }
 });
 document.addEventListener('input', ev => {
   const t = ev.target;
+  if (t.matches('.sv-in')) {
+    const raw = t.value.trim();
+    if (raw !== '' && !(/^\d{1,3}$/.test(raw) && +raw <= 200)) { t.setAttribute('aria-invalid', 'true'); const st = $('#sv-status'); if (st) st.textContent = 'Số vợt phải là số nguyên từ 0 đến 200.'; return; }
+    t.removeAttribute('aria-invalid'); setCount(t.dataset.svDate, t.dataset.emp, raw); svRefresh(); return;
+  }
   if (t.dataset.f) { S.f[t.dataset.f] = t.value; render(); }
   if (t.closest('.field') && t.getAttribute('aria-invalid')) { t.removeAttribute('aria-invalid'); const err = t.closest('.field').querySelector('.err'); if (err) err.hidden = true; }
 });
@@ -1178,8 +1294,8 @@ document.addEventListener('change', ev => {
   if (t.dataset.act === 'photo-add') addPhotos([...t.files]);
   if (t.dataset.act === 'dep-ocr') fillDepositFromImages(t, [...t.files]);
   if (t.dataset.act === 'dep-status') { const c = t.form.elements.closed_date; c.disabled = t.value === 'Đang chờ'; if (!c.disabled && !c.value) c.value = today(); }
-  if (t.matches('.cell-input')) { clearTimeout(strTimers[t.dataset.str + t.dataset.emp]); saveStringCell(t); }
 });
+document.addEventListener('focusin', ev => { if (ev.target.matches?.('.sv-in')) ev.target.select(); });
 document.addEventListener('focusout', ev => {
   const t = ev.target, wrap = t.closest?.('#sheet-form .field'); if (!wrap || !t.name) return;
   const err = wrap.querySelector('.err'); if (!err) return;
