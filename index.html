@@ -1173,6 +1173,8 @@ async function saveDay(d) {
     cacheNow();
     const st = document.getElementById('sv-status'); if (st) st.textContent = `Đã lưu ngày ${dmy(d).slice(0, 5)}`;
   } catch (e) {
+    // Taps made while this save was in flight are dropped too, so the screen matches the last saved state
+    if (svPending[d]) { clearTimeout(svPending[d].t); delete svPending[d]; }
     if (p.prev) rec.counts = p.prev; else S.strings = S.strings.filter(s => s !== rec);
     if (S.view === 'strings') render();
     toast(friendly(e));
