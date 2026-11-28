@@ -5,7 +5,9 @@
     "builder": "node extract-builder.js",
     "excel": "node extract-builder.js && node run.js",
     "ui": "node ui.js",
-    "login": "node login.js"
+    "login": "node login.js",
+    "strings": "node strings.js",
+    "shots": "node shots.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.45.4",

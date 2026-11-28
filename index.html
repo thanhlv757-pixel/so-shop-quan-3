@@ -4,25 +4,35 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Sổ Shop Quận 3</title>
-<meta name="theme-color" content="#1f6b4a">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231f6b4a'/%3E%3Ctext x='16' y='21' font-family='Arial' font-size='13' font-weight='700' fill='white' text-anchor='middle'%3EQ3%3C/text%3E%3C/svg%3E">
+<meta name="theme-color" content="#f5f4ef" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#262624" media="(prefers-color-scheme: dark)">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,500;8..60,600&display=swap">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23b04e2c'/%3E%3Ctext x='16' y='21' font-family='Arial' font-size='13' font-weight='700' fill='white' text-anchor='middle'%3EQ3%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://jlwayvnokaxiapfaozew.supabase.co">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <style>
 :root{
-  --bg:#f6f8f7;--surface:#fff;--subtle:#f2f5f3;--line:#e1e7e3;--line-strong:#cdd6d1;
-  --ink:#16261e;--text:#2f3f37;--muted:#5a6a62;--accent:#1f6b4a;--accent-hover:#175a3d;--accent-soft:#e7f1ec;
-  --danger:#b42318;--danger-soft:#fdeceb;--warn:#8a5300;--warn-soft:#fff4e0;--ok:#1f6b4a;
-  --r:8px;--shadow:0 1px 2px rgba(16,32,24,.06);--side:232px;
+  --bg:#f5f4ef;--surface:#fffefb;--subtle:#f0eee7;--line:#e3e0d6;--line-strong:#cfcbbf;
+  --ink:#1f1e1b;--text:#3d3c37;--muted:#6b6a63;--accent:#b04e2c;--accent-hover:#9a4325;--accent-soft:#f6e6df;
+  --on-accent:#fff;--danger:#b42318;--danger-soft:#fdeceb;--danger-line:#f3c7c2;--warn:#8a5300;--warn-soft:#fff4e0;--ok:#2f6f4f;
+  --r:10px;--rc:16px;--shadow:none;--side:240px;
   --s1:4px;--s2:8px;--s3:12px;--s4:16px;--s5:24px;--s6:32px;
-  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --serif:"Source Serif 4",Georgia,"Times New Roman",serif;
+  font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
   color-scheme:light;
 }
+@media (prefers-color-scheme:dark){:root{
+  --bg:#262624;--surface:#30302d;--subtle:#2b2b29;--line:#3b3a36;--line-strong:#4b4a45;
+  --ink:#ecebe6;--text:#d9d7cf;--muted:#a6a49b;--accent:#e08b6b;--accent-hover:#ea9d80;--accent-soft:#4a352c;
+  --on-accent:#1f1e1b;--danger:#ff8a7a;--danger-soft:#45231f;--danger-line:#6b2f28;--warn:#f0b45c;--warn-soft:#3f3220;--ok:#7cc39c;
+  color-scheme:dark;
+}}
 *{box-sizing:border-box}
-html,body{margin:0;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+html,body{margin:0;background:var(--bg);color:var(--text);font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased}
 h1,h2,h3,p{margin:0}
-h1{font-size:22px;line-height:1.3;font-weight:600;color:var(--ink);letter-spacing:-.2px}
-h2{font-size:15px;font-weight:600;color:var(--ink)}
+h1{font-family:var(--serif);font-size:30px;line-height:1.25;font-weight:500;color:var(--ink);text-wrap:balance}
+h2{font-family:var(--serif);font-size:20px;font-weight:500;color:var(--ink)}
 button,input,select,textarea{font:inherit;color:inherit}
 button{cursor:pointer}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
@@ -33,11 +43,11 @@ main:focus{outline:none}
 svg.i{width:18px;height:18px;flex-shrink:0;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 
 /* Buttons */
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:var(--s2);min-height:36px;padding:0 14px;border-radius:var(--r);border:1px solid var(--line-strong);background:var(--surface);color:var(--ink);font-weight:500;white-space:nowrap;box-shadow:var(--shadow)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:var(--s2);min-height:40px;padding:0 14px;border-radius:var(--r);border:1px solid var(--line-strong);background:var(--surface);color:var(--ink);font-weight:500;white-space:nowrap;box-shadow:var(--shadow)}
 .btn:hover{background:var(--subtle)}
-.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
 .btn.primary:hover{background:var(--accent-hover)}
-.btn.danger{background:var(--danger);border-color:var(--danger);color:#fff}
+.btn.danger{background:#b42318;border-color:#b42318;color:#fff}
 .btn.ghost{border-color:transparent;box-shadow:none;background:transparent}
 .btn.ghost:hover{background:var(--subtle)}
 .btn:disabled{opacity:.55;cursor:not-allowed}
@@ -47,30 +57,30 @@ svg.i{width:18px;height:18px;flex-shrink:0;stroke:currentColor;fill:none;stroke-
 .tile form{display:flex;gap:6px;margin:6px 0 2px}
 .tile form input{flex:1;min-width:0;height:36px;border:1px solid var(--line-strong);border-radius:var(--r);padding:0 8px;font-variant-numeric:tabular-nums}
 .link{border:0;background:none;padding:0;color:var(--accent);font-weight:500;text-decoration:underline;text-underline-offset:2px}
-@media (pointer:coarse){.btn,.icon-btn{min-height:44px}.icon-btn,.icon-btn.sm{width:44px;height:44px}.cell-input{height:44px}.thumbs button{width:44px;height:44px}}
+@media (pointer:coarse){.btn,.icon-btn{min-height:44px}.icon-btn,.icon-btn.sm{width:44px;height:44px}.thumbs button{width:44px;height:44px}}
 
 /* Shell */
 .shell{min-height:100vh}
 .side{position:fixed;inset:0 auto 0 0;width:var(--side);background:var(--surface);border-right:1px solid var(--line);display:flex;flex-direction:column;padding:var(--s4) var(--s3);z-index:30}
 .brand{display:flex;align-items:center;gap:10px;padding:4px 8px 20px}
-.logo{width:32px;height:32px;border-radius:7px;background:var(--accent);color:#fff;display:grid;place-items:center;font-weight:700;font-size:12px}
-.brand b{display:block;color:var(--ink);font-size:15px}
-.brand small{color:var(--muted);font-size:12px}
+.logo{width:32px;height:32px;border-radius:7px;background:var(--accent);color:var(--on-accent);display:grid;place-items:center;font-weight:700;font-size:14px}
+.brand b{display:block;color:var(--ink);font-size:17px}
+.brand small{color:var(--muted);font-size:14px}
 .nav{display:flex;flex-direction:column;gap:2px}
 .nav a{display:flex;align-items:center;gap:10px;min-height:38px;padding:0 10px;border-radius:var(--r);color:var(--text);text-decoration:none;font-weight:500}
 .nav a:hover{background:var(--subtle)}
 .nav a[aria-current=page]{background:var(--accent-soft);color:var(--accent)}
 .nav hr{border:0;border-top:1px solid var(--line);margin:8px 4px}
-.side-foot{margin-top:auto;border-top:1px solid var(--line);padding-top:var(--s3);display:flex;align-items:center;gap:var(--s2);font-size:12px;color:var(--muted);min-width:0}
+.side-foot{margin-top:auto;border-top:1px solid var(--line);padding-top:var(--s3);display:flex;align-items:center;gap:var(--s2);font-size:14px;color:var(--muted);min-width:0}
 .side-foot span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .work{margin-left:var(--side);min-width:0}
-.top{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:var(--s3);height:56px;padding:0 var(--s5);background:rgba(246,248,247,.96);border-bottom:1px solid var(--line)}
+.top{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:var(--s3);height:56px;padding:0 var(--s5);background:var(--bg);border-bottom:1px solid var(--line)}
 .top .menu{display:none}
 .month{display:flex;align-items:center;gap:2px;background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--r);box-shadow:var(--shadow)}
 .month .icon-btn{width:34px;height:34px}
 .month label{position:relative;min-width:104px;text-align:center;font-weight:600;color:var(--ink);cursor:pointer}
 .month input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%}
-.sync{margin-left:auto;font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px}
+.sync{margin-left:auto;font-size:14px;color:var(--muted);display:flex;align-items:center;gap:6px}
 main{max-width:1200px;margin:0 auto;padding:var(--s5) var(--s5) 64px}
 .head{display:flex;align-items:flex-end;justify-content:space-between;gap:var(--s4);margin-bottom:var(--s5);flex-wrap:wrap}
 .head p{color:var(--muted);margin-top:4px}
@@ -78,14 +88,14 @@ main{max-width:1200px;margin:0 auto;padding:var(--s5) var(--s5) 64px}
 .scrim{display:none}
 
 /* Surfaces */
-.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--rc)}
 .card-h{display:flex;align-items:center;justify-content:space-between;gap:var(--s3);padding:14px var(--s4);border-bottom:1px solid var(--line)}
 .card-b{padding:var(--s4)}
 .tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--s3);margin-bottom:var(--s4)}
 .tile{padding:var(--s4)}
-.tile .lbl{font-size:13px;color:var(--muted);display:flex;justify-content:space-between;gap:var(--s2)}
-.tile .val{font-size:24px;font-weight:600;color:var(--ink);margin:6px 0 2px;font-variant-numeric:tabular-nums;letter-spacing:-.3px;white-space:nowrap}
-.tile .sub{font-size:12px;color:var(--muted)}
+.tile .lbl{font-size:14px;color:var(--muted);display:flex;justify-content:space-between;gap:var(--s2)}
+.tile .val{font-family:var(--serif);font-size:30px;font-weight:600;color:var(--ink);margin:6px 0 2px;font-variant-numeric:tabular-nums;letter-spacing:-.3px;white-space:nowrap}
+.tile .sub{font-size:14px;color:var(--muted)}
 .tile.neg .val{color:var(--danger)}
 .grid2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:var(--s4)}
 .bar{height:8px;background:var(--subtle);border-radius:99px;overflow:hidden;border:1px solid var(--line)}
@@ -99,39 +109,34 @@ main{max-width:1200px;margin:0 auto;padding:var(--s5) var(--s5) 64px}
 .search input{border:0;outline:0;flex:1;min-width:0;background:transparent;color:var(--ink)}
 .search:focus-within{outline:2px solid var(--accent);outline-offset:1px}
 select.sel{height:36px;border:1px solid var(--line-strong);border-radius:var(--r);background:var(--surface);padding:0 10px;max-width:100%}
-.toolbar .count{margin-left:auto;font-size:13px;color:var(--muted)}
+.toolbar .count{margin-left:auto;font-size:14px;color:var(--muted)}
 .tw{overflow-x:auto}
 table{width:100%;border-collapse:collapse}
-th{font-size:12px;font-weight:600;color:var(--muted);text-align:left;padding:10px var(--s4);background:var(--subtle);border-bottom:1px solid var(--line);white-space:nowrap}
+th{font-size:14px;font-weight:600;color:var(--muted);text-align:left;padding:10px var(--s4);background:var(--subtle);border-bottom:1px solid var(--line);white-space:nowrap}
 td{padding:11px var(--s4);border-bottom:1px solid var(--line);vertical-align:top}
-tbody tr:hover{background:#fafbfa}
-table.mid td{vertical-align:middle;padding-top:6px;padding-bottom:6px}
+tbody tr:hover{background:var(--subtle)}
 tbody tr:last-child td{border-bottom:0}
 tfoot td{font-weight:600;color:var(--ink);background:var(--subtle);border-top:1px solid var(--line);border-bottom:0}
 td .t{color:var(--ink);font-weight:500}
-td .d{color:var(--muted);font-size:13px;margin-top:2px}
+td .d{color:var(--muted);font-size:14px;margin-top:2px}
 td.main{min-width:240px}
 td.act{width:1%;padding-top:6px;padding-left:4px;padding-right:8px}
-.codes{font-size:12.5px;line-height:1.7;white-space:nowrap}
-.code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;color:var(--text)}
-.tag{display:inline-block;font-size:12px;font-weight:500;padding:1px 7px;border-radius:5px;border:1px solid var(--line);background:var(--subtle);color:var(--text);white-space:nowrap}
-.tag.warn{background:var(--warn-soft);border-color:#f1d9a8;color:var(--warn)}
-.tag.ok{background:var(--accent-soft);border-color:#c9e0d4;color:var(--accent)}
+.codes{font-size:14px;line-height:1.7;white-space:nowrap}
+.code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:14px;color:var(--text)}
+.tag{display:inline-block;font-size:14px;font-weight:500;padding:1px 7px;border-radius:5px;border:1px solid var(--line);background:var(--subtle);color:var(--text);white-space:nowrap}
+.tag.warn{background:var(--warn-soft);border-color:var(--line);color:var(--warn)}
+.tag.ok{background:var(--accent-soft);border-color:var(--line);color:var(--accent)}
 .row-actions{display:flex;gap:2px;justify-content:flex-end}
 .thumbs{display:flex;gap:4px}
 .thumbs button{width:40px;height:40px;padding:0;border:1px solid var(--line);border-radius:6px;overflow:hidden;background:var(--subtle)}
-.thumbs .more{font-size:12px;font-weight:600;color:var(--text)}
+.thumbs .more{font-size:14px;font-weight:600;color:var(--text)}
 .thumbs img{width:100%;height:100%;object-fit:cover;display:block}
 .empty{padding:40px var(--s4);text-align:center;color:var(--muted)}
 .empty b{display:block;color:var(--ink);margin-bottom:4px}
 .empty .btn{margin-top:var(--s3)}
-.cell-input{width:64px;height:34px;border:1px solid var(--line-strong);border-radius:6px;text-align:right;padding:0 8px;font-variant-numeric:tabular-nums;background:var(--surface)}
-.cell-input:disabled{background:var(--subtle);color:var(--muted)}
-.cell-input.saving{border-color:var(--accent)}
-tr.today td{background:var(--accent-soft)}
-.skel{height:14px;border-radius:4px;background:#e9eeeb;animation:sk 1.2s ease-in-out infinite alternate}
+.skel{height:14px;border-radius:4px;background:var(--line);animation:sk 1.2s ease-in-out infinite alternate}
 @keyframes sk{from{opacity:1}to{opacity:.45}}
-.banner{display:flex;gap:var(--s2);align-items:flex-start;padding:var(--s3) var(--s4);border-radius:var(--r);border:1px solid #f3c7c2;background:var(--danger-soft);color:var(--danger);margin-bottom:var(--s4)}
+.banner{display:flex;gap:var(--s2);align-items:flex-start;padding:var(--s3) var(--s4);border-radius:var(--r);border:1px solid var(--danger-line);background:var(--danger-soft);color:var(--danger);margin-bottom:var(--s4)}
 .banner .link{color:var(--danger);margin-left:auto}
 
 /* Dialogs */
@@ -144,36 +149,36 @@ dialog.modal{border-radius:12px;width:420px;max-width:calc(100vw - 32px)}
 dialog.gallery{background:#111;width:100vw;height:100dvh;max-width:100vw;max-height:100dvh;margin:0}
 .sheet form{display:flex;flex-direction:column;height:100%}
 .dh{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--s3);padding:var(--s4) var(--s5);border-bottom:1px solid var(--line)}
-.dh p{color:var(--muted);font-size:13px;margin-top:2px}
+.dh p{color:var(--muted);font-size:14px;margin-top:2px}
 .db{padding:var(--s5);overflow-y:auto;flex:1}
 .df{display:flex;justify-content:flex-end;gap:var(--s2);padding:var(--s3) var(--s5);border-top:1px solid var(--line);background:var(--surface)}
 .field{display:block;margin-bottom:var(--s4)}
-.field>span{display:block;font-weight:500;color:var(--ink);margin-bottom:6px;font-size:13px}
+.field>span{display:block;font-weight:500;color:var(--ink);margin-bottom:6px;font-size:14px}
 .field>span em{color:var(--danger);font-style:normal}
 .field input,.field select,.field textarea{width:100%;min-height:38px;border:1px solid var(--line-strong);border-radius:var(--r);padding:8px 10px;background:var(--surface)}
 .field textarea{min-height:76px;resize:vertical}
-.field small{display:block;color:var(--muted);font-size:12px;margin-top:4px}
-.field .err{display:block;color:var(--danger);font-size:12px;margin-top:4px}
+.field small{display:block;color:var(--muted);font-size:14px;margin-top:4px}
+.field .err{display:block;color:var(--danger);font-size:14px;margin-top:4px}
 .field [aria-invalid=true]{border-color:var(--danger)}
 .field .filled{border-color:var(--accent)}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:0 var(--s3)}
 .photos{display:flex;flex-wrap:wrap;gap:var(--s2);margin-top:6px}
 .photo{position:relative;width:88px;height:88px;border:1px solid var(--line);border-radius:var(--r);overflow:hidden;background:var(--subtle)}
 .photo img{width:100%;height:100%;object-fit:cover}
-.photo button{position:absolute;top:4px;right:4px;width:26px;height:26px;border-radius:50%;border:1px solid var(--line-strong);background:#fff;display:grid;place-items:center;padding:0}
+.photo button{position:absolute;top:4px;right:4px;width:26px;height:26px;border-radius:50%;border:1px solid var(--line-strong);background:var(--surface);color:var(--ink);display:grid;place-items:center;padding:0}
 .photo button svg{width:14px;height:14px}
-.photo .new{position:absolute;left:0;right:0;bottom:0;font-size:11px;text-align:center;background:rgba(255,255,255,.92)}
-.picker{width:88px;height:88px;border:1px dashed var(--line-strong);border-radius:var(--r);display:grid;place-items:center;align-content:center;gap:4px;color:var(--muted);font-size:12px;cursor:pointer;background:var(--surface)}
+.photo .new{position:absolute;left:0;right:0;bottom:0;font-size:13px;text-align:center;background:var(--surface);color:var(--text)}
+.picker{width:88px;height:88px;border:1px dashed var(--line-strong);border-radius:var(--r);display:grid;place-items:center;align-content:center;gap:4px;color:var(--muted);font-size:14px;cursor:pointer;background:var(--surface)}
 .picker:focus-within{outline:2px solid var(--accent)}
 .picker input{position:absolute;opacity:0;width:1px;height:1px}
 .gal{display:flex;flex-direction:column;height:100%;color:#eee}
 .gal-top{display:flex;align-items:center;gap:var(--s2);padding:var(--s3) var(--s4)}
-.gal-top span{flex:1;font-size:13px}
+.gal-top span{flex:1;font-size:14px}
 .gal-top .icon-btn,.gal-body .icon-btn{color:#eee}
 .gal-top .icon-btn:hover,.gal-body .icon-btn:hover{background:#2a2a2a}
 .gal-body{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;gap:var(--s2);padding:0 var(--s2) var(--s4)}
 .gal-body img{max-width:calc(100% - 100px);max-height:100%;object-fit:contain}
-.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 16px;border-radius:var(--r);font-weight:500;z-index:100;box-shadow:0 6px 24px rgba(0,0,0,.2);max-width:calc(100vw - 32px)}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:var(--r);font-weight:500;z-index:100;box-shadow:0 6px 24px rgba(0,0,0,.2);max-width:calc(100vw - 32px)}
 .toast[hidden]{display:none}
 .check{display:flex;gap:var(--s2);align-items:flex-start;margin:var(--s3) 0}
 .check input{margin-top:3px;accent-color:var(--accent);width:16px;height:16px}
@@ -182,14 +187,59 @@ dialog.gallery{background:#111;width:100vw;height:100dvh;max-width:100vw;max-hei
 .inline-form{display:flex;gap:var(--s2);margin-top:var(--s3);flex-wrap:wrap}
 .inline-form input{flex:1;min-width:160px;height:36px;border:1px solid var(--line-strong);border-radius:var(--r);padding:0 10px}
 
+/* Đan vợt */
+.sv{max-width:560px}
+.sv-sum{padding:var(--s4)}
+.sv-sum-top{display:flex;justify-content:space-between;align-items:baseline;gap:var(--s2);margin-bottom:var(--s2)}
+.sv-sum-top b{font-size:28px;color:var(--ink)}
+.sv-hint{font-size:16px;color:var(--muted);margin-top:var(--s2)}
+.sv-hint.ok{color:var(--ok);font-weight:600}
+.sv-mode{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin:var(--s4) 0;padding:4px;background:var(--subtle);border:1px solid var(--line);border-radius:12px}
+.sv-mode button{min-height:44px;border:0;border-radius:9px;background:transparent;color:var(--muted);font-weight:500}
+.sv-mode button[aria-pressed=true]{background:var(--surface);color:var(--ink);font-weight:600;box-shadow:var(--shadow)}
+.sv-daynav{display:flex;align-items:center;gap:var(--s2);margin-bottom:var(--s3)}
+.sv-nav{width:48px;height:48px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--ink);display:grid;place-items:center;flex-shrink:0}
+.sv-nav:disabled{opacity:.35;cursor:not-allowed}
+.sv-day{flex:1;text-align:center}
+.sv-day b{display:block;font-size:26px;line-height:1.2;color:var(--ink)}
+.sv-day span{font-size:16px;color:var(--muted)}
+.sv-list{padding:0 var(--s4)}
+.sv-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
+.sv-row:last-child{border-bottom:0}
+.sv-n{flex:1;min-width:0}
+.sv-n b{display:block;font-size:17px;color:var(--ink)}
+.sv-n span{font-size:16px;color:var(--muted)}
+.sv-row.sun .sv-n b{color:var(--danger)}
+.sv-step{width:48px;height:48px;border-radius:12px;border:1px solid var(--line-strong);background:var(--subtle);color:var(--ink);font-size:26px;line-height:1;display:grid;place-items:center;flex-shrink:0;touch-action:manipulation}
+.sv-step.plus{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.sv-in{width:60px;height:48px;border:1px solid var(--line-strong);border-radius:12px;text-align:center;font-size:24px;font-weight:600;background:var(--surface);color:var(--ink);font-variant-numeric:tabular-nums}
+.sv-in[aria-invalid=true]{border-color:var(--danger)}
+.sv-tot{display:flex;justify-content:space-between;padding:12px 0;border-top:1px solid var(--line);color:var(--muted)}
+.sv-tot b{color:var(--ink)}
+.sv-done{width:100%;min-height:48px;margin-top:var(--s3)}
+.sv-h{margin:var(--s5) 0 4px}
+.sv-p{font-size:16px;margin:var(--s2) 0}
+.sv-strip{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;margin-top:var(--s2)}
+.sv-strip button{min-height:48px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:4px 0;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.15}
+.sv-strip small{font-size:14px;color:var(--muted)}
+.sv-strip button.has{background:var(--accent-soft);border-color:transparent}
+.sv-strip button.cur{outline:2px solid var(--accent);outline-offset:1px}
+.sv-strip button:disabled{opacity:.35;cursor:not-allowed}
+.sv-who{display:grid;grid-template-columns:repeat(auto-fit,minmax(90px,1fr));gap:var(--s2)}
+.sv-who button{min-height:56px;border:1px solid var(--line);border-radius:12px;background:var(--surface);color:var(--ink);display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.2}
+.sv-who small{font-size:14px;color:var(--muted)}
+.sv-who button[aria-pressed=true]{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.sv-who button[aria-pressed=true] small{color:var(--on-accent)}
+.sv-pay{padding:0 var(--s4)}
+
 /* Auth */
 .auth{min-height:100vh;display:grid;grid-template-columns:minmax(0,1fr);place-items:center;padding:var(--s4)}
 .auth .card{width:380px;max-width:100%;padding:var(--s6) var(--s5)}
 .auth .brand{padding:0 0 var(--s5)}
-.auth h1{font-size:20px;margin-bottom:4px}
+.auth h1{font-size:22px;margin-bottom:4px}
 .auth p{color:var(--muted);margin-bottom:var(--s5)}
 .auth .btn{width:100%;min-height:40px}
-.form-err{color:var(--danger);background:var(--danger-soft);border:1px solid #f3c7c2;border-radius:var(--r);padding:8px 10px;margin-bottom:var(--s4);font-size:13px}
+.form-err{color:var(--danger);background:var(--danger-soft);border:1px solid var(--danger-line);border-radius:var(--r);padding:8px 10px;margin-bottom:var(--s4);font-size:14px}
 
 /* Responsive */
 @media (max-width:1023px){
@@ -208,7 +258,7 @@ dialog.gallery{background:#111;width:100vw;height:100dvh;max-width:100vw;max-hei
   .head{align-items:stretch}
   .head .actions{width:100%}
   .head .actions .btn{flex:1}
-  .tile .val{font-size:20px}
+  .tile .val{font-size:22px}
   .two{grid-template-columns:1fr}
   .search{max-width:none}
   .toolbar .count{margin-left:0;width:100%}
@@ -217,7 +267,7 @@ dialog.gallery{background:#111;width:100vw;height:100dvh;max-width:100vw;max-hei
   table.stack,table.stack tbody,table.stack tr,table.stack td,table.stack tfoot{display:block;width:100%}
   table.stack tr{border-bottom:1px solid var(--line);padding:var(--s2) 0}
   table.stack td{border:0;padding:4px var(--s4);display:flex;justify-content:space-between;gap:var(--s3);text-align:right}
-  table.stack td::before{content:attr(data-label);color:var(--muted);font-size:13px;text-align:left;flex-shrink:0}
+  table.stack td::before{content:attr(data-label);color:var(--muted);font-size:14px;text-align:left;flex-shrink:0}
   table.stack td.main{display:block;text-align:left}
   table.stack td.main::before{display:none}
   table.stack td .thumbs,table.stack td .row-actions{justify-content:flex-end}
@@ -226,9 +276,6 @@ dialog.gallery{background:#111;width:100vw;height:100dvh;max-width:100vw;max-hei
   table.stack tfoot tr{padding:0}
   table.stack tfoot td{padding:12px var(--s4)}
   .dh,.db,.df{padding-left:var(--s4);padding-right:var(--s4)}
-  table.mid th,table.mid td{padding-left:6px;padding-right:6px}
-  table.mid th:first-child,table.mid td:first-child{padding-left:var(--s3)}
-  .cell-input{width:50px;padding:0 6px}
   .gal-body img{max-width:calc(100% - 80px)}
 }
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
@@ -562,7 +609,8 @@ const S = {
   settings: store.get('soshop:settings') || { employees: [], kpi_target: 450, rate_low: 5000, rate_high: 10000 },
   budget: 0, expenses: [], strings: [], deposits: [], members: [],
   loaded: false, syncing: false, error: '', urls: {},
-  f: { expQ: '', expCat: 'all', depQ: '', depStatus: 'all' }, withImages: true, exporting: false
+  f: { expQ: '', expCat: 'all', depQ: '', depStatus: 'all' }, withImages: true, exporting: false,
+  sv: { mode: 'day', day: null, who: null }
 };
 let loadSeq = 0;
 
@@ -578,6 +626,7 @@ const must = ({ data, error }) => { if (error) throw error; return data; };
 
 /* ---------- data ---------- */
 async function loadMonth(month, { silent } = {}) {
+  flushCounts();
   const seq = ++loadSeq;
   const cacheKey = 'soshop:m:' + month;
   const cached = store.get(cacheKey);
@@ -703,9 +752,9 @@ const VIEW_FN = {
           <div class="kv"><b>Tổng tiền công <span class="muted" style="font-weight:400">· ${money(st.rate)}/cây</span></b><b class="num">${money(st.pay)}</b></div></div>
         </div></section>
       <section class="card" aria-labelledby="h-recent"><div class="card-h"><h2 id="h-recent">Khoản chi gần đây</h2><a class="link" href="#expenses">Xem tất cả</a></div>
-        <div class="card-b" style="padding-top:4px;padding-bottom:4px">${recent.map(e => `<div class="kv"><span style="min-width:0"><span style="color:var(--ink);font-weight:500">${esc(e.purpose || catOf(e))}</span><br><span class="muted" style="font-size:13px">${dmy(e.date)} · ${esc(catOf(e))}</span></span><span class="num">${money(e.amount)}</span></div>`).join('') || `<div class="empty"><b>Chưa có khoản chi</b>Tháng này chưa ghi khoản nào.<br><button class="btn primary" data-act="expense-new">${ic('plus')}Thêm khoản chi</button></div>`}</div></section>
+        <div class="card-b" style="padding-top:4px;padding-bottom:4px">${recent.map(e => `<div class="kv"><span style="min-width:0"><span style="color:var(--ink);font-weight:500">${esc(e.purpose || catOf(e))}</span><br><span class="muted" style="font-size:14px">${dmy(e.date)} · ${esc(catOf(e))}</span></span><span class="num">${money(e.amount)}</span></div>`).join('') || `<div class="empty"><b>Chưa có khoản chi</b>Tháng này chưa ghi khoản nào.<br><button class="btn primary" data-act="expense-new">${ic('plus')}Thêm khoản chi</button></div>`}</div></section>
     </div>
-    ${st.pending.length ? `<section class="card" style="margin-top:16px" aria-labelledby="h-wait"><div class="card-h"><h2 id="h-wait">Khách đang chờ hàng</h2><a class="link" href="#deposits">Mở danh sách cọc</a></div><div class="card-b" style="padding-top:4px;padding-bottom:4px">${st.pending.slice(0, 5).map(x => `<div class="kv"><span><span style="color:var(--ink);font-weight:500">${esc(x.customer)}</span> <span class="muted">· ${esc(x.product)}</span><br><span class="muted" style="font-size:13px">Cọc ${dmy(x.date)} · chờ ${waitDays(x)} ngày</span></span><span class="num">${money(x.amount)}</span></div>`).join('')}</div></section>` : ''}`;
+    ${st.pending.length ? `<section class="card" style="margin-top:16px" aria-labelledby="h-wait"><div class="card-h"><h2 id="h-wait">Khách đang chờ hàng</h2><a class="link" href="#deposits">Mở danh sách cọc</a></div><div class="card-b" style="padding-top:4px;padding-bottom:4px">${st.pending.slice(0, 5).map(x => `<div class="kv"><span><span style="color:var(--ink);font-weight:500">${esc(x.customer)}</span> <span class="muted">· ${esc(x.product)}</span><br><span class="muted" style="font-size:14px">Cọc ${dmy(x.date)} · chờ ${waitDays(x)} ngày</span></span><span class="num">${money(x.amount)}</span></div>`).join('')}</div></section>` : ''}`;
   },
 
   expenses() {
@@ -738,22 +787,41 @@ const VIEW_FN = {
   },
 
   strings() {
-    const st = stats(), emps = S.settings.employees, t = today();
-    const days = Array.from({ length: daysIn(S.month) }, (_, i) => `${S.month}-${String(i + 1).padStart(2, '0')}`);
-    const by = Object.fromEntries(S.strings.map(s => [String(s.date).slice(0, 10), s.counts || {}]));
-    const dow = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
-    return `${head('Đan vợt', `${monthLabel(S.month)} · ${nf.format(st.racks)}/${nf.format(S.settings.kpi_target)} cây · đơn giá ${money(st.rate)}/cây · tiền công ${money(st.pay)}`)}
-    <section class="card" aria-label="Bảng đan vợt theo ngày">
-      ${emps.length ? `<div class="toolbar"><span class="muted" style="font-size:13px">Nhập số vợt, dữ liệu tự lưu khi rời ô.</span><span class="count">${nf.format(st.racks)} cây · ${st.achieved ? 'Đạt KPI' : `còn ${nf.format(S.settings.kpi_target - st.racks)} cây tới KPI`}</span></div>
-      <div class="tw"><table class="mid"><thead><tr><th>Ngày</th>${emps.map(n => `<th class="num">${esc(n)}</th>`).join('')}<th class="num">Tổng</th></tr></thead><tbody>
-      ${days.map(d => { const c = by[d] || {}, future = d > t, tot = sum(emps, n => Number(c[n]) || 0), wd = new Date(d + 'T00:00:00').getDay();
-        return `<tr${d === t ? ' class="today"' : ''}><td style="white-space:nowrap"><span class="${wd === 0 ? '' : 'muted'}" style="display:inline-block;width:26px;font-size:12px;${wd === 0 ? 'color:var(--danger)' : ''}">${dow[wd]}</span>${dmy(d).slice(0, 5)}</td>
-        ${emps.map(n => `<td class="num"><input class="cell-input" type="number" inputmode="numeric" min="0" max="200" step="1" value="${c[n] ? Number(c[n]) : ''}" placeholder="0" data-str="${d}" data-emp="${esc(n)}" aria-label="${esc(n)} ngày ${dmy(d)}"${future ? ' disabled' : ''}></td>`).join('')}
-        <td class="num"><b style="color:var(--ink)">${tot || ''}</b></td></tr>`; }).join('')}
-      </tbody><tfoot><tr><td>Tổng</td>${st.per.map(p => `<td class="num">${nf.format(p.count)}</td>`).join('')}<td class="num">${nf.format(st.racks)}</td></tr>
-      <tr><td>Tiền công</td>${st.per.map(p => `<td class="num">${money(p.pay)}</td>`).join('')}<td class="num">${money(st.pay)}</td></tr></tfoot></table></div>`
-      : `<div class="empty"><b>Chưa có nhân viên</b>Thêm nhân viên để bắt đầu ghi số vợt.<br><button class="btn primary" data-act="go" data-view="settings">Mở Cài đặt</button></div>`}
-    </section>`;
+    const emps = S.settings.employees;
+    if (!emps.length) return `${head('Đan vợt', monthLabel(S.month))}<section class="card"><div class="empty"><b>Chưa có nhân viên</b>Thêm nhân viên để bắt đầu ghi số vợt.<br><button class="btn primary" data-act="go" data-view="settings">Mở Cài đặt</button></div></section>`;
+    const day = svDay(), who = svWho(), dates = svDates(), last = dates[dates.length - 1], dayMode = S.sv.mode !== 'emp';
+    const wd = d => new Date(d + 'T00:00:00').getDay(), dm = d => dmy(d).slice(0, 5);
+    const row = (id, d, n, label, sub, sun) => `<div class="sv-row${sun ? ' sun' : ''}"><div class="sv-n"><b>${label}</b><span>${sub}</span></div>
+      <button class="sv-step" data-act="sv-step" data-sv-step="-1" data-sv-date="${d}" data-emp="${esc(n)}" aria-label="Bớt 1 cây của ${esc(n)} ngày ${dm(d)}">−</button>
+      <input class="sv-in" id="${id}" type="text" inputmode="numeric" pattern="[0-9]*" enterkeyhint="next" autocomplete="off" maxlength="3" data-sv-date="${d}" data-emp="${esc(n)}" value="${countOf(d, n) || ''}" placeholder="0" aria-label="Số vợt ${esc(n)} ngày ${dm(d)}">
+      <button class="sv-step plus" data-act="sv-step" data-sv-step="1" data-sv-date="${d}" data-emp="${esc(n)}" aria-label="Thêm 1 cây cho ${esc(n)} ngày ${dm(d)}">+</button></div>`;
+    return `${head('Đan vợt', `${monthLabel(S.month)} · nhập số vợt theo ngày hoặc theo từng người`)}
+    <div class="sv">
+      <section class="card sv-sum" id="sv-sum" aria-label="Tổng tháng">${svSumHTML()}</section>
+      <div class="sv-mode" role="group" aria-label="Cách nhập">
+        <button id="sv-mode-day" data-act="sv-mode" data-mode="day" aria-pressed="${dayMode}">Theo ngày</button>
+        <button id="sv-mode-emp" data-act="sv-mode" data-mode="emp" aria-pressed="${!dayMode}">Theo từng người</button>
+      </div>
+      ${dayMode ? `
+      <div class="sv-daynav">
+        <button class="sv-nav" id="sv-prev" data-act="sv-go" data-k="-1" aria-label="Ngày trước"${day <= dates[0] ? ' disabled' : ''}>${ic('left')}</button>
+        <div class="sv-day" aria-live="polite"><b id="sv-day-label">${dm(day)}</b><span>${['Chủ nhật', 'Thứ hai', 'Thứ ba', 'Thứ tư', 'Thứ năm', 'Thứ sáu', 'Thứ bảy'][wd(day)]}</span></div>
+        <button class="sv-nav" id="sv-next" data-act="sv-go" data-k="1" aria-label="Ngày sau"${day >= last ? ' disabled' : ''}>${ic('right')}</button>
+      </div>
+      <section class="card sv-list" aria-label="Số vợt ngày ${dm(day)}">${emps.map((n, i) => row('sv-d-' + i, day, n, esc(n), '', false)).join('')}
+        <div class="sv-tot"><span>Tổng ngày này</span><b class="num" id="sv-day-total">${svDayTotal(day)} cây</b></div></section>
+      <button class="btn primary sv-done" data-act="sv-go" data-k="1" data-focus="1"${day >= last ? ' disabled' : ''}>${day >= last ? 'Đã tới ngày cuối có thể nhập' : 'Xong ngày này · sang ngày sau'}</button>
+      <h2 class="sv-h">Các ngày trong tháng</h2><p class="muted sv-p">Ô tô màu là ngày đã có số. Chạm để mở ngày đó.</p>
+      <div class="sv-strip" id="sv-strip">${svStripHTML()}</div>`
+      : `
+      <div class="sv-who" id="sv-who" role="group" aria-label="Chọn người">${svWhoHTML()}</div>
+      <p class="muted sv-p">Đang nhập cho ${esc(who)}. Gõ số rồi bấm Enter để xuống ngày sau.</p>
+      <section class="card sv-list" aria-label="Số vợt của ${esc(who)}">${dates.map(d => row('sv-p-' + d, d, who, dm(d), ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'][wd(d)], wd(d) === 0)).join('')}</section>
+      ${emps.indexOf(who) < emps.length - 1 ? `<button class="btn primary sv-done" data-act="sv-who" data-name="${esc(emps[emps.indexOf(who) + 1])}">Xong ${esc(who)} · sang ${esc(emps[emps.indexOf(who) + 1])}</button>` : ''}`}
+      <h2 class="sv-h">Tiền công tạm tính</h2>
+      <section class="card sv-pay" id="sv-pay">${svPayHTML()}</section>
+      <p class="muted sv-p" id="sv-status" role="status" aria-live="polite"></p>
+    </div>`;
   },
 
   deposits() {
@@ -819,11 +887,11 @@ const VIEW_FN = {
       <section class="card" aria-labelledby="h-e"><div class="card-h"><h2 id="h-e">Nhân viên đan vợt</h2></div><div class="card-b">
         <div class="chips">${S.settings.employees.map(n => `<span class="chip">${esc(n)}<button class="icon-btn sm" data-act="emp-del" data-name="${esc(n)}" aria-label="Xóa nhân viên ${esc(n)}">${ic('x')}</button></span>`).join('') || '<span class="muted">Chưa có nhân viên.</span>'}</div>
         <form class="inline-form" data-form="emp" novalidate><label class="sr" for="emp-in">Tên nhân viên mới</label><input id="emp-in" name="name" placeholder="Tên nhân viên" maxlength="40" required><button class="btn" type="submit">${ic('plus')}Thêm nhân viên</button></form>
-        <p class="muted" style="font-size:12px;margin-top:8px">Xóa nhân viên chỉ ẩn cột; số vợt đã ghi vẫn được giữ.</p></div></section>
+        <p class="muted" style="font-size:14px;margin-top:8px">Xóa nhân viên chỉ ẩn cột; số vợt đã ghi vẫn được giữ.</p></div></section>
       <section class="card" aria-labelledby="h-m"><div class="card-h"><h2 id="h-m">Người được dùng sổ</h2></div><div class="card-b">
         <div class="chips">${S.members.map(m => `<span class="chip">${esc(m.email)}${m.email === me ? ' <span class="muted">(bạn)</span>' : `<button class="icon-btn sm" data-act="mem-del" data-email="${esc(m.email)}" aria-label="Gỡ quyền ${esc(m.email)}">${ic('x')}</button>`}</span>`).join('')}</div>
         <form class="inline-form" data-form="mem" novalidate><label class="sr" for="mem-in">Email cấp quyền</label><input id="mem-in" name="email" type="email" placeholder="email@vd.com" required><button class="btn" type="submit">${ic('plus')}Cấp quyền</button></form>
-        <p class="muted" style="font-size:12px;margin-top:8px">Người mới cần có tài khoản trong Supabase (Authentication → Add user) rồi mới đăng nhập được.</p></div></section>
+        <p class="muted" style="font-size:14px;margin-top:8px">Người mới cần có tài khoản trong Supabase (Authentication → Add user) rồi mới đăng nhập được.</p></div></section>
     </div>`;
   }
 };
@@ -1053,28 +1121,72 @@ async function saveSettings(patch) {
   S.settings = next; store.set('soshop:settings', next); cacheNow(); render();
 }
 
-/* String cell autosave */
-const strTimers = {};
-async function saveStringCell(inp) {
-  const d = inp.dataset.str, emp = inp.dataset.emp, v = inp.value === '' ? 0 : Math.round(Number(inp.value));
-  if (!(v >= 0 && v <= 200)) { inp.setAttribute('aria-invalid', 'true'); toast('Số vợt phải từ 0 đến 200.'); return; }
-  inp.removeAttribute('aria-invalid');
-  let rec = S.strings.find(s => String(s.date).slice(0, 10) === d);
-  const prev = rec ? { ...rec.counts } : null;
-  if (Number(rec?.counts?.[emp] || 0) === v) return;
+/* ---------- Đan vợt: nhập theo ngày / theo người ---------- */
+const svDates = () => { const [a, end] = range(S.month), t = today(), last = t < end ? t : end, out = []; for (let d = a; d <= last; d = S.month + '-' + String(+d.slice(8) + 1).padStart(2, '0')) out.push(d); return out.length ? out : [a]; };
+const svDay = () => { const ds = svDates(), d = S.sv.day; return ds.includes(d) ? d : ds[ds.length - 1]; };
+const svWho = () => S.settings.employees.includes(S.sv.who) ? S.sv.who : S.settings.employees[0];
+const recOf = d => S.strings.find(s => String(s.date).slice(0, 10) === d);
+const countOf = (d, n) => Number(recOf(d)?.counts?.[n] || 0);
+const svDayTotal = d => sum(S.settings.employees, n => countOf(d, n));
+function svSumHTML() {
+  const st = stats(), k = S.settings.kpi_target;
+  return `<div class="sv-sum-top"><span>Vợt đã đan toàn shop</span><span class="num"><b id="sv-month-total">${nf.format(st.racks)}</b> / ${nf.format(k)} cây</span></div>
+    <div class="bar"><i style="width:${Math.min(100, st.racks / k * 100)}%"></i></div>
+    <p class="sv-hint${st.achieved ? ' ok' : ''}">${st.achieved ? `Đạt KPI · ${money(S.settings.rate_high)}/cây cho toàn bộ ${nf.format(st.racks)} cây` : `Còn ${nf.format(k - st.racks)} cây để lên ${money(S.settings.rate_high)}/cây`}</p>`;
+}
+function svPayHTML() { const st = stats(); return st.per.map(p => `<div class="kv"><span>${esc(p.name)} · ${nf.format(p.count)} cây</span><span class="num">${money(p.pay)}</span></div>`).join('') + `<div class="kv"><b>Tổng · ${money(st.rate)}/cây</b><b class="num">${money(st.pay)}</b></div>`; }
+function svWhoHTML() { const who = svWho(); return stats().per.map(p => `<button data-act="sv-who" data-sv-who="${esc(p.name)}" data-name="${esc(p.name)}" aria-pressed="${p.name === who}"><b>${esc(p.name)}</b><small class="num">${nf.format(p.count)} cây</small></button>`).join(''); }
+function svStripHTML() {
+  const [a] = range(S.month), ds = svDates(), cur = svDay(), dow = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
+  let h = '<span></span>'.repeat((new Date(a + 'T00:00:00').getDay() + 6) % 7);
+  for (let i = 1; i <= daysIn(S.month); i++) {
+    const d = S.month + '-' + String(i).padStart(2, '0'), t = svDayTotal(d), ok = ds.includes(d);
+    h += `<button data-act="sv-day" data-day="${d}" class="${t ? 'has' : ''}${d === cur ? ' cur' : ''}"${ok ? '' : ' disabled'} aria-label="Ngày ${i}${t ? ', ' + t + ' cây' : ', chưa có số'}"><small>${dow[new Date(d + 'T00:00:00').getDay()]}</small><b>${i}</b>${t ? `<small class="num">${t}</small>` : ''}</button>`;
+  }
+  return h;
+}
+// Update totals without re-rendering inputs (keeps the phone keyboard open while typing)
+function svRefresh() {
+  const set = (id, html) => { const el = document.getElementById(id); if (el) el.innerHTML = html; };
+  set('sv-sum', svSumHTML()); set('sv-pay', svPayHTML()); set('sv-strip', svStripHTML()); set('sv-who', svWhoHTML());
+  const t = document.getElementById('sv-day-total'); if (t) t.textContent = svDayTotal(svDay()) + ' cây';
+}
+
+// Batched save: edits to one date are upserted together 600 ms after the last change
+const svPending = {};
+function setCount(d, n, v) {
+  v = Math.max(0, Math.min(200, Math.round(Number(v) || 0)));
+  let rec = recOf(d);
+  if (!svPending[d]) svPending[d] = { prev: rec ? { ...rec.counts } : null };
   if (!rec) { rec = { date: d, counts: {} }; S.strings.push(rec); }
-  rec.counts = { ...rec.counts, [emp]: v };
-  inp.classList.add('saving');
+  rec.counts = { ...rec.counts, [n]: v };
+  clearTimeout(svPending[d].t);
+  svPending[d].t = setTimeout(() => saveDay(d), 600);
+  return v;
+}
+async function saveDay(d) {
+  const p = svPending[d]; if (!p) return;
+  clearTimeout(p.t); delete svPending[d];
+  const rec = recOf(d); if (!rec) return;
   try {
     must(await sb.from('strings').upsert({ date: d, counts: rec.counts, updated_at: new Date().toISOString() }));
     cacheNow();
-    const active = document.activeElement;
-    if (active?.dataset?.str) { const key = [active.dataset.str, active.dataset.emp]; render(); document.querySelector(`[data-str="${key[0]}"][data-emp="${CSS.escape(key[1])}"]`)?.focus(); }
-    else render();
+    const st = document.getElementById('sv-status'); if (st) st.textContent = `Đã lưu ngày ${dmy(d).slice(0, 5)}`;
   } catch (e) {
-    if (prev) rec.counts = prev; else S.strings = S.strings.filter(s => s !== rec);
-    inp.classList.remove('saving'); inp.setAttribute('aria-invalid', 'true'); toast(friendly(e));
+    // Taps made while this save was in flight are dropped too, so the screen matches the last saved state
+    if (svPending[d]) { clearTimeout(svPending[d].t); delete svPending[d]; }
+    if (p.prev) rec.counts = p.prev; else S.strings = S.strings.filter(s => s !== rec);
+    if (S.view === 'strings') render();
+    toast(friendly(e));
   }
+}
+const flushCounts = () => Object.keys(svPending).forEach(saveDay);
+document.addEventListener('visibilitychange', () => { if (document.hidden) flushCounts(); });
+window.addEventListener('pagehide', flushCounts);
+function svFocus(id) { const el = document.getElementById(id); if (el) { el.focus(); el.scrollIntoView({ block: 'center', behavior: 'smooth' }); } }
+function svShift(k, focus) {
+  const ds = svDates(), i = ds.indexOf(svDay()) + k; if (i < 0 || i >= ds.length) return false;
+  flushCounts(); S.sv.day = ds[i]; render(); if (focus) svFocus('sv-d-0'); return true;
 }
 
 /* Gallery */
@@ -1121,7 +1233,7 @@ async function exportExcel() {
 }
 
 /* ---------- events ---------- */
-function go(view) { if (!VIEWS[view]) view = 'overview'; S.view = view; $('#side')?.classList.remove('open'); $('#scrim')?.classList.remove('open'); render(); if (view === 'settings') loadMembers(); $('#main')?.focus({ preventScroll: true }); window.scrollTo(0, 0); }
+function go(view) { flushCounts(); if (!VIEWS[view]) view = 'overview'; S.view = view; $('#side')?.classList.remove('open'); $('#scrim')?.classList.remove('open'); render(); if (view === 'settings') loadMembers(); $('#main')?.focus({ preventScroll: true }); window.scrollTo(0, 0); }
 async function loadMembers() { try { S.members = must(await sb.from('members').select('email').order('email')); if (S.view === 'settings') render(); } catch {} }
 window.addEventListener('hashchange', () => go(location.hash.slice(1)));
 
@@ -1158,17 +1270,33 @@ document.addEventListener('click', async ev => {
     case 'clear-dep': S.f.depQ = ''; S.f.depStatus = 'all'; render(); break;
     case 'export': exportExcel(); break;
     case 'toggle-img': S.withImages = el.checked; break;
+    case 'sv-mode': flushCounts(); S.sv.mode = el.dataset.mode; render(); break;
+    case 'sv-who': flushCounts(); S.sv.who = el.dataset.name; render(); window.scrollTo(0, 0); break;
+    case 'sv-day': flushCounts(); S.sv.day = el.dataset.day; render(); window.scrollTo(0, 0); break;
+    case 'sv-go': svShift(+el.dataset.k, el.dataset.focus); break;
+    case 'sv-step': { const d = el.dataset.svDate, n = el.dataset.emp, v = setCount(d, n, countOf(d, n) + +el.dataset.svStep);
+      const inp = document.querySelector(`.sv-in[data-sv-date="${d}"][data-emp="${CSS.escape(n)}"]`); if (inp) { inp.value = v || ''; inp.removeAttribute('aria-invalid'); } svRefresh(); break; }
     case 'emp-del': { const n = el.dataset.name; confirmBox('Xóa nhân viên?', `Ẩn cột “${esc(n)}” khỏi bảng đan vợt. Số vợt đã ghi vẫn được giữ trong dữ liệu.`, 'Xóa nhân viên', async () => { await saveSettings({ employees: S.settings.employees.filter(x => x !== n) }); toast('Đã xóa nhân viên'); }); break; }
     case 'mem-del': { const m = el.dataset.email; confirmBox('Gỡ quyền dùng sổ?', `${esc(m)} sẽ không xem hoặc sửa được sổ nữa.`, 'Gỡ quyền', async () => { must(await sb.from('members').delete().eq('email', m)); await loadMembers(); toast('Đã gỡ quyền'); }); break; }
   }
 });
 document.addEventListener('keydown', ev => {
+  if (ev.key === 'Enter' && ev.target.matches?.('.sv-in')) {
+    ev.preventDefault();
+    const t = ev.target, emps = S.settings.employees;
+    if (S.sv.mode === 'emp') { const ds = svDates(), next = ds[ds.indexOf(t.dataset.svDate) + 1]; next ? svFocus('sv-p-' + next) : t.blur(); }
+    else { const i = emps.indexOf(t.dataset.emp); if (i < emps.length - 1) svFocus('sv-d-' + (i + 1)); else if (!svShift(1, true)) t.blur(); }
+  }
   if (ev.key === 'Escape' && $('#side')?.classList.contains('open')) { $('#side').classList.remove('open'); $('#scrim').classList.remove('open'); $('.top .menu')?.focus(); }
   if ($('#gallery').open && (ev.key === 'ArrowRight' || ev.key === 'ArrowLeft') && gal.list.length > 1) { gal.i = (gal.i + (ev.key === 'ArrowRight' ? 1 : -1) + gal.list.length) % gal.list.length; drawGallery(); }
-  if (ev.key === 'Enter' && ev.target.matches?.('.cell-input')) { ev.preventDefault(); const all = [...document.querySelectorAll('.cell-input:not(:disabled)')]; const i = all.indexOf(ev.target); const cols = S.settings.employees.length; (all[i + cols] || all[i + 1])?.focus(); }
 });
 document.addEventListener('input', ev => {
   const t = ev.target;
+  if (t.matches('.sv-in')) {
+    const raw = t.value.trim();
+    if (raw !== '' && !(/^\d{1,3}$/.test(raw) && +raw <= 200)) { t.setAttribute('aria-invalid', 'true'); const st = $('#sv-status'); if (st) st.textContent = 'Số vợt phải là số nguyên từ 0 đến 200.'; return; }
+    t.removeAttribute('aria-invalid'); setCount(t.dataset.svDate, t.dataset.emp, raw); svRefresh(); return;
+  }
   if (t.dataset.f) { S.f[t.dataset.f] = t.value; render(); }
   if (t.closest('.field') && t.getAttribute('aria-invalid')) { t.removeAttribute('aria-invalid'); const err = t.closest('.field').querySelector('.err'); if (err) err.hidden = true; }
 });
@@ -1178,8 +1306,8 @@ document.addEventListener('change', ev => {
   if (t.dataset.act === 'photo-add') addPhotos([...t.files]);
   if (t.dataset.act === 'dep-ocr') fillDepositFromImages(t, [...t.files]);
   if (t.dataset.act === 'dep-status') { const c = t.form.elements.closed_date; c.disabled = t.value === 'Đang chờ'; if (!c.disabled && !c.value) c.value = today(); }
-  if (t.matches('.cell-input')) { clearTimeout(strTimers[t.dataset.str + t.dataset.emp]); saveStringCell(t); }
 });
+document.addEventListener('focusin', ev => { if (ev.target.matches?.('.sv-in')) ev.target.select(); });
 document.addEventListener('focusout', ev => {
   const t = ev.target, wrap = t.closest?.('#sheet-form .field'); if (!wrap || !t.name) return;
   const err = wrap.querySelector('.err'); if (!err) return;
