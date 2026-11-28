@@ -59,6 +59,10 @@ Hàm thuần `buildWorkbook(ExcelJS, d)` trong `<script id="xlsx-builder">` củ
 
 Form "Thêm khách đặt cọc" có ô "Chọn ảnh" (tối đa 3 ảnh tin nhắn / chuyển khoản). Đọc chữ ngay trong trình duyệt bằng `tesseract.js@5.1.1` (CDN, chỉ tải khi dùng, tiếng Việt) — không gửi ảnh đi đâu, không lưu ảnh, không đụng Supabase. Hàm thuần `parseDepositText(text, today)` nằm trong `<script id="xlsx-builder">`; `fillDepositFromImages` chỉ điền ô trống (riêng ngày và loại sản phẩm thay giá trị mặc định), không tự lưu. Giới hạn đã biết: sai dấu tiếng Việt ở tên, ngày trên ảnh chuyển khoản nhỏ hay đọc sai (ngày vô lý thì bỏ), chưa hiểu "1tr2". **Cập nhật cùng ngày:** người dùng chọn thêm Gemini (khóa API tự tạo ở AI Studio, biết gói miễn phí cho Google dùng dữ liệu). Nút "Chọn ảnh" giờ gọi Edge Function `read-deposit` trước (mã nguồn: `supabase/functions/read-deposit/index.ts`, đã deploy v1, `verify_jwt` bật + kiểm `is_member()`, secret `GEMINI_API_KEY`, model `gemini-3.5-flash-lite`, Interactions API `v1beta/interactions`); lỗi hoặc hết lượt thì tự lùi về Tesseract. **Chưa thử thật với khóa** — dạng JSON trả về của REST chưa có tài liệu xác nhận, nếu lỗi xem log function (`gemini …` / `unparsable`). Test: `node extract-builder.js && node parse.js`.
 
+**Thêm 23/11/2026:** dán ảnh (Ctrl+V) khi form khách cọc đang mở cũng chạy `fillDepositFromImages` (handler `paste` dùng chung với ảnh bằng chứng chi phí).
+
+**Đang dở (28/11/2026): gợi ý tên sản phẩm từ KiotViet.** Người dùng chọn: giữ nguyên các ô form, chỉ thêm gợi ý khi gõ ô "Tên / mã sản phẩm" (`<datalist>`), danh sách lấy từ file Excel hàng hóa xuất từ KiotViet (Hàng hóa → Xuất file). Chỉ giữ tên + mã hàng (repo công khai, bỏ giá vốn/tồn kho), lưu thành file tĩnh trong repo, không đổi schema. Chưa có file: cần địa chỉ cửa hàng KiotViet (`xxx.kiotviet.vn`) hoặc người dùng tự xuất. Chưa quyết: có cho Gemini chọn tên khớp danh sách không (tùy độ dài danh sách).
+
 ## Kiểm thử (thư mục `test/`)
 
 ```
